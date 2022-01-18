@@ -10,16 +10,36 @@ import io.reactivex.Flowable
 import timber.log.Timber
 
 class PrinterFinder(private val context: Context) {
+	private var printerList: List<DiscoveredPrinter> = listOf()
 
 	fun findPrinter(filter: DeviceFilter?): Flowable<DiscoveryStatus> {
 		return Flowable.create<DiscoveryStatus>(
 			{ emitter ->
 				Timber.d("Discovery started")
 				emitter.onNext(DiscoveryStatus.DiscoveryInProgress)
-				BluetoothDiscoverer.findPrinters(context, object : DiscoveryHandler {
+				printerList = listOf()
+				emitter.onNext(DiscoveryStatus.PrinterListUpdated(printerList))
+
+				val handler = object : DiscoveryHandler {
 					override fun foundPrinter(printer: DiscoveredPrinter) {
-						Timber.d("Printer found: ${printer.address}")
-						emitter.onNext(DiscoveryStatus.PrinterDiscovered(printer))
+						for (settingsKey in printer.discoveryDataMap.keys) {
+							Timber.d("Key: " + settingsKey + " Value: " + printer.discoveryDataMap[settingsKey])
+						}
+						printerList = printerList.map { oldPrinter ->
+							if (oldPrinter.address == printer.address) {
+								Timber.d("Printer updated: ${getPrinterFriendlyName(printer)} (${printer.address})")
+								printer
+							} else {
+								oldPrinter
+							}
+						}
+
+						if (printerList.none { it.address == printer.address }) {
+							Timber.d("Printer found: ${getPrinterFriendlyName(printer)} (${printer.address})")
+							printerList = printerList + printer
+						}
+
+						emitter.onNext(DiscoveryStatus.PrinterListUpdated(printerList))
 					}
 
 					override fun discoveryFinished() {
@@ -31,16 +51,20 @@ class PrinterFinder(private val context: Context) {
 						Timber.e("Discovery error: $error")
 						emitter.onNext(DiscoveryStatus.DiscoveryError(RuntimeException(error)))
 					}
-				}, filter)
+				}
+				if (filter != null) BluetoothDiscoverer.findPrinters(context, handler, filter)
+				else BluetoothDiscoverer.findPrinters(context, handler)
 			}, BackpressureStrategy.LATEST
 		)
 			.onErrorReturn { DiscoveryStatus.DiscoveryError(it) }
 	}
+
+	fun getPrinterFriendlyName(printer: DiscoveredPrinter) = printer.discoveryDataMap["FRIENDLY_NAME"]
 }
 
 sealed class DiscoveryStatus {
 	object DiscoveryInProgress : DiscoveryStatus()
-	class DiscoveryError(val error: Throwable) : DiscoveryStatus()
-	class PrinterDiscovered(val printer: DiscoveredPrinter) : DiscoveryStatus()
+	data class DiscoveryError(val error: Throwable) : DiscoveryStatus()
+	data class PrinterListUpdated(val printerList: List<DiscoveredPrinter>) : DiscoveryStatus()
 	object DiscoveryCompleted : DiscoveryStatus()
 }

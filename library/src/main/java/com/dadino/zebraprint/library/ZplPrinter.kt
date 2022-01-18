@@ -2,55 +2,28 @@ package com.dadino.zebraprint.library
 
 import android.content.Context
 import com.zebra.sdk.comm.Connection
-import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.ZebraPrinter
 import com.zebra.sdk.printer.ZebraPrinterFactory
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
-import timber.log.Timber
+import io.reactivex.Completable
+ object ZplPrinter {
 
-class ZplPrinter(private val context: Context) {
+	fun printZPL(printerConnection: Connection, zpl: String): Completable {
+		return Completable.fromCallable {
+			printerConnection.open()
 
-	fun printZPL(printerConnection: Connection, zpl: String): Flowable<PrintStatus> {
-		return Flowable.create(
-			{ emitter ->
-				Timber.d("ZPL printing started")
-				emitter.onNext(PrintStatus.PrintInProgress)
+			printerConnection.write(zpl.toByteArray())
 
-				try {
-					printerConnection.open()
-
-					printerConnection.write(zpl.toByteArray())
-				} catch (e: ConnectionException) {
-					Timber.e(e, "ZPL printing error")
-					emitter.onNext(PrintStatus.PrintError(e))
-				} finally {
-					Timber.d("ZPL printing completed")
-					printerConnection.close()
-					emitter.onNext(PrintStatus.PrintCompleted)
-				}
-			}, BackpressureStrategy.LATEST
-		)
+			printerConnection.close()
+		}
 	}
 
-	fun printZPLTemplate(printerConnection: Connection, templateName: String, data: Map<Int, String>): Flowable<PrintStatus> {
-		return Flowable.create(
-			{ emitter ->
-				Timber.d("ZPL printing started")
-				emitter.onNext(PrintStatus.PrintInProgress)
+	fun printZPLTemplate(printerConnection: Connection, templateName: String, data: Map<Int, String>): Completable {
+		return Completable.fromCallable {
 
-				try {
-					val printer: ZebraPrinter = ZebraPrinterFactory.getLinkOsPrinter(printerConnection)
-					printer.printStoredFormat(templateName, data)
-				} catch (e: ConnectionException) {
-					Timber.e(e, "ZPL printing error")
-					emitter.onNext(PrintStatus.PrintError(e))
-				} finally {
-					Timber.d("ZPL printing completed")
-					printerConnection.close()
-					emitter.onNext(PrintStatus.PrintCompleted)
-				}
-			}, BackpressureStrategy.LATEST
-		)
+			val printer: ZebraPrinter = ZebraPrinterFactory.getLinkOsPrinter(printerConnection)
+			printer.printStoredFormat(templateName, data)
+
+			printerConnection.close()
+		}
 	}
 }
