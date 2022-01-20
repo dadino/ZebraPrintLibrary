@@ -6,7 +6,6 @@ import com.dadino.zebraprint.library.DiscoveryStatus
 import com.dadino.zebraprint.library.StatusReader.printPrinterStatus
 import com.dadino.zebraprint.library.ZebraPrint
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
@@ -21,7 +20,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_discover_printer)
 		Timber.plant(Timber.DebugTree())
 
-		findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { beginPrinterDiscovery() }
+		findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { print() }
 	}
 
 	private var discoveryDisposable: Disposable? = null
@@ -41,11 +40,20 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 			}, onComplete = {}, onError = { it.printStackTrace() })
 	}
 
-	private fun printLabel(address: String): Completable {
+	private var printDisposable: Disposable? = null
+	private fun print() {
+		printDisposable?.dispose()
+		printDisposable = zebraPrinter.printZPLWithLastUsedPrinter(generateLabel())
+			.subscribeBy(
+				onComplete = { Timber.d("Label printed") },
+				onError = { it.printStackTrace() }
+			)
+	}
 
-		val label = " ^XA\n" +
+	private fun generateLabel(): String {
+		return " ^XA\n" +
 				"    ^CI28\n" +
-				"    ^LL732\n" +
+				"    ^LL100\n" +
 				"    ^FO60,50^A0N,20,20^FB480,4,0,C,0^FH_^FDRICEVUTA DI PAGAMENTO\\&^FS\n" +
 				"    \n" +
 				"    ^FO60,80^A0N,60,60^FB480,2,0,C,0^FH_^FDVERBALE\\&N.B 25543\\&^FS\n" +
@@ -61,6 +69,6 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				"    \n" +
 				"    ^FO60,651^GB480,1,1,B,0^FS\n" +
 				"    ^XZ"
-		return zebraPrinter.printZPL(address = address, zpl = label)
+
 	}
 }

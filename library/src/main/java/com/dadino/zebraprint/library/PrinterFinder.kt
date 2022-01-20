@@ -18,16 +18,15 @@ class PrinterFinder(private val context: Context) {
 				Timber.d("Discovery started")
 				emitter.onNext(DiscoveryStatus.DiscoveryInProgress)
 				printerList = listOf()
-				emitter.onNext(DiscoveryStatus.PrinterListUpdated(printerList))
 
 				val handler = object : DiscoveryHandler {
 					override fun foundPrinter(printer: DiscoveredPrinter) {
 						for (settingsKey in printer.discoveryDataMap.keys) {
-							Timber.d("Key: " + settingsKey + " Value: " + printer.discoveryDataMap[settingsKey])
+							Timber.d("Key: $settingsKey, Value: ${printer.getFriendlyName()}")
 						}
 						printerList = printerList.map { oldPrinter ->
 							if (oldPrinter.address == printer.address) {
-								Timber.d("Printer updated: ${getPrinterFriendlyName(printer)} (${printer.address})")
+								Timber.d("Printer updated: ${printer.getFriendlyName()} (${printer.address})")
 								printer
 							} else {
 								oldPrinter
@@ -35,7 +34,7 @@ class PrinterFinder(private val context: Context) {
 						}
 
 						if (printerList.none { it.address == printer.address }) {
-							Timber.d("Printer found: ${getPrinterFriendlyName(printer)} (${printer.address})")
+							Timber.d("Printer found: ${printer.getFriendlyName()} (${printer.address})")
 							printerList = printerList + printer
 						}
 
@@ -57,9 +56,9 @@ class PrinterFinder(private val context: Context) {
 			}, BackpressureStrategy.LATEST
 		)
 			.onErrorReturn { DiscoveryStatus.DiscoveryError(it) }
+			.toAsync()
 	}
 
-	fun getPrinterFriendlyName(printer: DiscoveredPrinter) = printer.discoveryDataMap["FRIENDLY_NAME"]
 }
 
 sealed class DiscoveryStatus {
