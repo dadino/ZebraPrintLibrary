@@ -104,6 +104,10 @@ class ZebraPrint(private val context: Context) {
 		} ?: throw PrinterDiscoveryCancelledException()
 	}
 
+	suspend fun getSelectedPrinter(): Printer? {
+		return selectedPrinterRepo.loadPrinter()
+	}
+
 	private var sharedDialog: AlertDialog? = null
 	private suspend fun showPrinterListDialog(printerList: List<Printer>): Printer {
 		return suspendCoroutine<Printer> { continuation ->

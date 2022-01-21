@@ -1,7 +1,9 @@
 package com.dadino.zebraprint.library.rx2
 
 import android.content.Context
+import com.dadino.zebraprint.library.Optional
 import com.dadino.zebraprint.library.PrintResponse
+import com.dadino.zebraprint.library.Printer
 import com.dadino.zebraprint.library.ZebraPrint
 import io.reactivex.Completable
 import io.reactivex.Single
@@ -35,6 +37,12 @@ class RxZebraPrint(private val context: Context, private val coroutineContext: C
 	fun searchPrinterAndSave(): Completable {
 		return rxCompletable(coroutineContext) {
 			zebraPrint.searchPrinterAndSave()
+		}
+	}
+
+	fun getSelectedPrinter(): Single<Optional<Printer>> {
+		return rxSingle(coroutineContext) {
+			Optional.create(zebraPrint.getSelectedPrinter())
 		}
 	}
 

@@ -84,7 +84,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				progressBar.visibility = View.VISIBLE
 				zebraPrinter.searchPrinterAndSave()
 				Timber.d("Search flow completed")
-				Snackbar.make(root, "Search completed", Snackbar.LENGTH_SHORT).show()
+				Snackbar.make(root, "Printer saved", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.INVISIBLE
 			} catch (e: Exception) {
 				Timber.e(e)
@@ -127,7 +127,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 			}
 			.subscribeBy(onComplete = {
 				Timber.d("Search flow completed")
-				Snackbar.make(root, "Search completed", Snackbar.LENGTH_SHORT).show()
+				Snackbar.make(root, "Printer saved", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.INVISIBLE
 			},
 				onError = {
