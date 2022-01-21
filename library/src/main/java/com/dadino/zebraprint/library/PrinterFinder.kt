@@ -58,6 +58,9 @@ class PrinterFinder(private val context: Context) {
 			if (filter != null) BluetoothDiscoverer.findPrinters(context, handler, filter)
 			else BluetoothDiscoverer.findPrinters(context, handler)
 
+			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one
+			// NetworkDiscoverer.findPrinters(handler)
+
 			awaitClose {
 				//TODO stop discovery
 			}

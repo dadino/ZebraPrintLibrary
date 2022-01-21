@@ -53,16 +53,17 @@ class ZebraPrint(private val context: Context) {
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
 		var printer: DiscoveredPrinter? = null
 		try {
-			discoverPrinters()
-				.collect { printerList ->
-					withContext(Dispatchers.Main) { printer = showPrinterListDialog(printerList) }
+			discoverPrinters().collect { printerList ->
+				withContext(Dispatchers.Main) {
+					printer = showPrinterListDialog(printerList)
 				}
+			}
 		} catch (e: Exception) {
 			sharedDialog?.dismiss()
 			throw e
 		}
 		printer?.let {
-			val saved = saveSelectedPrinter(it)
+			saveSelectedPrinter(it)
 			return printZPL(printerName = it.getFriendlyName(), printerAddress = it.address, zpl = zpl)
 		} ?: throw PrinterDiscoveryCancelledException()
 	}
