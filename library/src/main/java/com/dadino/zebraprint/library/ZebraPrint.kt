@@ -2,7 +2,6 @@ package com.dadino.zebraprint.library
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
-import com.dadino.zebraprint.library.ConnectionFactory.getConnectionToAddress
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.PrinterStatus
@@ -18,6 +17,7 @@ class ZebraPrint(private val context: Context) {
 
 	private var lastUsedPrinterAddress: DiscoveredPrinter? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(context) }
+	private val connectionHandler: ConnectionHandler = ConnectionHandler()
 
 	suspend fun printZPLWithLastUsedPrinter(zpl: String): Result<PrintResponse> {
 		return withContext(Dispatchers.IO) {
@@ -31,9 +31,13 @@ class ZebraPrint(private val context: Context) {
 		return withContext(Dispatchers.IO) {
 			if (printerAddress != null) {
 				try {
-					val result = printZPL(printerName = printerName, printerAddress = printerAddress, zpl = zpl)
-					if (result.isSuccess) result
-					else searchPrinterThenPrint(zpl)
+					val printResult = printZPL(printerName = printerName, printerAddress = printerAddress, zpl = zpl)
+					if (printResult.isSuccess) printResult
+					else {
+						val exception = printResult.exceptionOrNull()
+						if (exception is PrinterNotReadyToPrint) throw exception
+						else searchPrinterThenPrint(zpl)
+					}
 				} catch (e: ConnectionException) {
 					searchPrinterThenPrint(zpl)
 				}
@@ -109,7 +113,7 @@ class ZebraPrint(private val context: Context) {
 				val statusResult = readPrinterStatus(printerAddress)
 				val status = statusResult.getOrThrow()
 				if (status.isReadyToPrint) {
-					ZplPrinter.printZPL(getConnectionToAddress(printerAddress), zpl)
+					ZplPrinter.printZPL(connectionHandler.getConnectionToAddress(printerAddress), zpl)
 					Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
 				} else {
 					Result.failure(PrinterNotReadyToPrint(status))
@@ -124,7 +128,7 @@ class ZebraPrint(private val context: Context) {
 		return withContext(Dispatchers.IO) {
 			try {
 
-				ZplPrinter.printZPLTemplate(getConnectionToAddress(address), templateName, data)
+				ZplPrinter.printZPLTemplate(connectionHandler.getConnectionToAddress(address), templateName, data)
 				Result.success(PrintResponse(printerName = null, printerAddress = address))
 			} catch (e: Exception) {
 				e.printStackTrace()
@@ -135,7 +139,13 @@ class ZebraPrint(private val context: Context) {
 
 	private suspend fun readPrinterStatus(address: String): Result<PrinterStatus> {
 		return withContext(Dispatchers.IO) {
-			StatusReader.readPrinterStatus(getConnectionToAddress(address))
+			StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address))
+		}
+	}
+
+	private suspend fun closeConnections() {
+		return withContext(Dispatchers.IO) {
+			connectionHandler.closeConnections()
 		}
 	}
 }
