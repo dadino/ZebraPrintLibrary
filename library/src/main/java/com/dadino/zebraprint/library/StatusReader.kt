@@ -5,31 +5,32 @@ import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.PrinterStatus
 import com.zebra.sdk.printer.ZebraPrinter
 import com.zebra.sdk.printer.ZebraPrinterFactory
-import io.reactivex.Single
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 
 object StatusReader {
 
-	fun readPrinterStatus(printerConnection: Connection): Single<PrinterStatus> {
-		return Single.create { emitter ->
-			Timber.d("Status reading started")
-
-			try {
-				printerConnection.open()
+	suspend fun readPrinterStatus(printerConnection: Connection): Result<PrinterStatus> {
+		return withContext(Dispatchers.IO) {
+			val result = try {
+				Timber.d("Status reading started")
+				if (printerConnection.isConnected.not()) printerConnection.open()
 
 				val printer: ZebraPrinter = ZebraPrinterFactory.getInstance(printerConnection)
 
 				val printerStatus: PrinterStatus = printer.currentStatus
 				Timber.d("Printer status: ${printPrinterStatus(printerStatus)}")
-				emitter.onSuccess(printerStatus)
+				Result.success(printerStatus)
 			} catch (e: ConnectionException) {
 				Timber.e(e, "Status reading error")
-				emitter.onError(e)
+				Result.failure(e)
 			} finally {
 				Timber.d("Status reading completed")
-				printerConnection.close()
+				//printerConnection.close()
 			}
+			result
 		}
 	}
 
