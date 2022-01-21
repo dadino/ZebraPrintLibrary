@@ -8,6 +8,60 @@
 	android:layout_height="match_parent"
 	tools:context=".DiscoverPrinterActivity">
 
+	<LinearLayout
+		android:layout_width="0dp"
+		android:layout_height="0dp"
+		android:orientation="vertical"
+		android:padding="16dp"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent">
+
+		<TextView
+			android:id="@+id/textView2"
+			style="@style/TextAppearance.MaterialComponents.Overline"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="Coroutines" />
+
+		<Button
+			android:id="@+id/coroutines_print_zpl"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="Print ZPL" />
+
+		<Button
+			android:id="@+id/coroutines_search"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="Search for printer" />
+
+		<TextView
+			android:id="@+id/textView3"
+			style="@style/TextAppearance.MaterialComponents.Overline"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="RX Java 2" />
+
+		<Button
+			android:id="@+id/rx2_print_zpl"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="Print ZPL" />
+
+		<Button
+			android:id="@+id/rx2_search"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="16dp"
+			android:text="Search for printer" />
+	</LinearLayout>
+
 	<ProgressBar
 		android:id="@+id/progressBar"
 		style="?android:attr/progressBarStyle"
@@ -22,16 +76,5 @@
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />
-
-	<com.google.android.material.floatingactionbutton.FloatingActionButton
-		android:id="@+id/fab"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_gravity="bottom|end"
-		android:layout_marginEnd="16dp"
-		android:layout_marginBottom="16dp"
-		app:layout_constraintBottom_toBottomOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:srcCompat="@android:drawable/ic_dialog_email" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

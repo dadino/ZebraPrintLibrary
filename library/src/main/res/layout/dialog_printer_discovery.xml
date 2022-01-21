@@ -6,18 +6,18 @@
 	android:layout_height="wrap_content"
 	android:padding="16dp">
 
-	<ImageView
+	<com.google.android.material.progressindicator.CircularProgressIndicator
 		android:id="@+id/imageView"
+		style="@style/Widget.MaterialComponents.CircularProgressIndicator"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:layout_marginStart="16dp"
 		android:layout_marginTop="16dp"
 		android:layout_marginBottom="16dp"
+		android:indeterminate="true"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
-		app:srcCompat="@drawable/ic_discovery_in_progress"
-		app:tint="?colorOnSurface" />
+		app:layout_constraintTop_toTopOf="parent" />
 
 	<TextView
 		android:id="@+id/textView"

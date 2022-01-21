@@ -49,7 +49,6 @@ class PrinterFinder(private val context: Context) {
 
 				override fun discoveryError(error: String) {
 					Timber.e("Discovery error: $error")
-
 					cancel(error, RuntimeException(error))
 				}
 			}

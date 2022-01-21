@@ -1,7 +1,10 @@
 package com.dadino.zebraprint.library
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.ConnectionException
@@ -35,6 +38,7 @@ class ZebraPrint(private val context: Context) {
 
 	private suspend fun printWithSelectedPrinter(printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		return withContext(Dispatchers.IO) {
+			checkPermissions()
 			val printer = loadSelectedPrinter()
 
 			tryPrint(printerAddress = printer?.address, printerName = printer?.friendlyName, printAction = printAction)
@@ -81,6 +85,7 @@ class ZebraPrint(private val context: Context) {
 	}
 
 	suspend fun searchPrinterAndSave(): Result<Boolean> {
+		checkPermissions()
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
 		var printer: Printer? = null
 		try {
@@ -129,6 +134,12 @@ class ZebraPrint(private val context: Context) {
 		//builder.setCancelable(true)
 		//builder.setOnCancelListener { continuation.resumeWithException(PrinterDiscoveryCancelledException()) }
 		sharedDialog = builder.show()
+	}
+
+	private fun checkPermissions(): Boolean {
+		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+			return true
+		} else throw PermissionsRequired(listOf(Manifest.permission.ACCESS_FINE_LOCATION))
 	}
 
 	private suspend fun loadSelectedPrinter(): Printer? {

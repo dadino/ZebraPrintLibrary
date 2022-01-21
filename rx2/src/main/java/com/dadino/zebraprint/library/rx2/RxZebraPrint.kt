@@ -32,7 +32,7 @@ class RxZebraPrint(private val context: Context, private val coroutineContext: C
 		}
 	}
 
-	fun searchPrinterAndSave(byteArray: ByteArray): Completable {
+	fun searchPrinterAndSave(): Completable {
 		return rxCompletable(coroutineContext) {
 			zebraPrint.searchPrinterAndSave()
 		}

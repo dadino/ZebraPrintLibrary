@@ -2,11 +2,13 @@ package com.dadino.zebraprintlibrary
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.dadino.zebraprint.library.PermissionsRequired
 import com.dadino.zebraprint.library.ZebraPrint
 import com.dadino.zebraprint.library.rx2.RxZebraPrint
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
@@ -15,18 +17,32 @@ import timber.log.Timber
 
 class DiscoverPrinterActivity : AppCompatActivity() {
 	private val root: View by lazy { findViewById<View>(R.id.root) }
-	private val fab: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
 	private val progressBar: View by lazy { findViewById<View>(R.id.progressBar) }
+	private val coroutinesPrintZpl: View by lazy { findViewById<View>(R.id.coroutines_print_zpl) }
+	private val coroutinesSearch: View by lazy { findViewById<View>(R.id.coroutines_search) }
+	private val rx2PrintZpl: View by lazy { findViewById<View>(R.id.rx2_print_zpl) }
+	private val rx2Search: View by lazy { findViewById<View>(R.id.rx2_search) }
 
 	private val zebraPrinter: ZebraPrint by lazy { ZebraPrint(this) }
 	private val zebraPrinterRx: RxZebraPrint by lazy { RxZebraPrint(this) }
+
+	private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_discover_printer)
 		Timber.plant(Timber.DebugTree())
+		requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
+			map.entries.forEach {
+				Timber.d("Permission ${it.key} granted: ${it.value}")
+			}
+		}
 
-		fab.setOnClickListener { printWithRx() }
+		coroutinesPrintZpl.setOnClickListener { printWithCoroutines() }
+		coroutinesSearch.setOnClickListener { searchWithCoroutines() }
+
+		rx2PrintZpl.setOnClickListener { printWithRx() }
+		rx2Search.setOnClickListener { searchWithRx() }
 	}
 
 	private fun printWithCoroutines() {
@@ -35,25 +51,54 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				Timber.d("Print flow started")
 				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.VISIBLE
-				val printResult = zebraPrinter.printZPLWithLastUsedPrinter(generateLabel())
+				val printResult = zebraPrinter.printZplWithSelectedPrinter(generateLabel())
 				Timber.d("Print flow completed")
 				val printResponse = printResult.getOrThrow()
 				Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.INVISIBLE
 			} catch (e: Exception) {
-				Timber.e(e)
-				Timber.d("Print flow error")
-				Snackbar.make(root, e.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
+				when (e) {
+					is PermissionsRequired -> {
+						requestPermissionsForPrinter(e.permissionList)
+					}
+					else                   -> {
+						Timber.e(e)
+						Timber.d("Print flow error")
+						Snackbar.make(root, e.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
+					}
+				}
 				progressBar.visibility = View.INVISIBLE
 			}
 		}
+	}
 
+	private fun requestPermissionsForPrinter(permissionList: List<String>) {
+		requestPermissionLauncher.launch(permissionList.toTypedArray())
+	}
+
+	private fun searchWithCoroutines() {
+		this.lifecycleScope.launch {
+			try {
+				Timber.d("Search flow started")
+				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.VISIBLE
+				zebraPrinter.searchPrinterAndSave()
+				Timber.d("Search flow completed")
+				Snackbar.make(root, "Search completed", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.INVISIBLE
+			} catch (e: Exception) {
+				Timber.e(e)
+				Timber.d("Search flow error")
+				Snackbar.make(root, e.message ?: "Search error", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.INVISIBLE
+			}
+		}
 	}
 
 	private var printDisposable: Disposable? = null
 	private fun printWithRx() {
 		printDisposable?.dispose()
-		printDisposable = zebraPrinterRx.printZPLWithLastUsedPrinter(generateLabel())
+		printDisposable = zebraPrinterRx.printZplWithSelectedPrinter(generateLabel())
 			.doOnSubscribe {
 				Timber.d("Print flow started")
 				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
@@ -66,6 +111,27 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 			},
 				onError = {
 					Timber.d("Print flow error")
+					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
+					progressBar.visibility = View.INVISIBLE
+				})
+	}
+
+	private var searchDisposable: Disposable? = null
+	private fun searchWithRx() {
+		searchDisposable?.dispose()
+		searchDisposable = zebraPrinterRx.searchPrinterAndSave()
+			.doOnSubscribe {
+				Timber.d("Search flow started")
+				Snackbar.make(root, "Search started", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.VISIBLE
+			}
+			.subscribeBy(onComplete = {
+				Timber.d("Search flow completed")
+				Snackbar.make(root, "Search completed", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.INVISIBLE
+			},
+				onError = {
+					Timber.d("Search flow error")
 					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
 					progressBar.visibility = View.INVISIBLE
 				})
