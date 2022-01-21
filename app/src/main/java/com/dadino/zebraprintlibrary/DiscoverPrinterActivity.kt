@@ -5,8 +5,11 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dadino.zebraprint.library.ZebraPrint
+import com.dadino.zebraprint.library.rx2.RxZebraPrint
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -16,16 +19,17 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val progressBar: View by lazy { findViewById<View>(R.id.progressBar) }
 
 	private val zebraPrinter: ZebraPrint by lazy { ZebraPrint(this) }
+	private val zebraPrinterRx: RxZebraPrint by lazy { RxZebraPrint(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_discover_printer)
 		Timber.plant(Timber.DebugTree())
 
-		fab.setOnClickListener { print() }
+		fab.setOnClickListener { printWithRx() }
 	}
 
-	private fun print() {
+	private fun printWithCoroutines() {
 		this.lifecycleScope.launch {
 			try {
 				Timber.d("Print flow started")
@@ -44,6 +48,27 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 			}
 		}
 
+	}
+
+	private var printDisposable: Disposable? = null
+	private fun printWithRx() {
+		printDisposable?.dispose()
+		printDisposable = zebraPrinterRx.printZPLWithLastUsedPrinter(generateLabel())
+			.doOnSubscribe {
+				Timber.d("Print flow started")
+				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.VISIBLE
+			}
+			.subscribeBy(onSuccess = { printResponse ->
+				Timber.d("Print flow completed")
+				Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
+				progressBar.visibility = View.INVISIBLE
+			},
+				onError = {
+					Timber.d("Print flow error")
+					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
+					progressBar.visibility = View.INVISIBLE
+				})
 	}
 
 	private fun generateLabel(): String {

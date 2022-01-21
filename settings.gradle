@@ -7,3 +7,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ZebraPrintLibrary"
 include ':app', ':library'
+include ':rx2'

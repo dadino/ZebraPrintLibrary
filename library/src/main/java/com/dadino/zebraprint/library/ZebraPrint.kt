@@ -155,7 +155,7 @@ class ZebraPrint(private val context: Context) {
 		}
 	}
 
-	private suspend fun closeConnections() {
+	suspend fun closeConnections() {
 		return withContext(Dispatchers.IO) {
 			connectionHandler.closeConnections()
 		}
