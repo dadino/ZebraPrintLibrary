@@ -3,15 +3,15 @@ plugins {
     id 'kotlin-android'
 }
 
-android {
-    compileSdk 31
+android { compileSdkVersion rootProject.compileSdk
 
     defaultConfig {
-        applicationId "com.dadino.zebraprintlibrary"
-        minSdk 21
-        targetSdk 31
-        versionCode 1
-        versionName "1.0"
+        applicationId "com.dadino.zebraprintlibrary.sample"
+        minSdkVersion rootProject.minSdk
+        targetSdkVersion rootProject.targetSdk
+
+        versionCode rootProject.versionCode
+        versionName rootProject.versionName
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

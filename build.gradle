@@ -14,3 +14,20 @@ buildscript {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+ext {
+    compileSdk = 31
+    minSdk = 21
+    targetSdk = 31
+
+    versionCode = 1
+    versionName = "0.1.0"
+
+    groupId = "io.github.dadino.zebraprintlibrary"
+    artifactIdLibrary = "library"
+    artifactIdRx2 = "rx2"
+
+    ossrhUsername = System.properties['ossrhUsername']
+    ossrhPassword = System.properties['ossrhPassword']
+    sonatypeStagingProfileId = System.properties['sonatypeStagingProfileId']
+}

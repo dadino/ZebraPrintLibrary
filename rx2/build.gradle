@@ -3,14 +3,19 @@ plugins {
     id 'kotlin-android'
 }
 
+ext {
+    PUBLISH_GROUP_ID = rootProject.groupId
+    PUBLISH_VERSION = rootProject.versionName
+    PUBLISH_ARTIFACT_ID = rootProject.artifactIdRx2
+}
+apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
+
 android {
-    compileSdk 31
+    compileSdkVersion rootProject.compileSdk
 
     defaultConfig {
-        minSdk 21
-        targetSdk 31
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion rootProject.minSdk
+        targetSdkVersion rootProject.targetSdk
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
