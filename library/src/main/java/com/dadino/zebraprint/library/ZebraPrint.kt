@@ -8,7 +8,9 @@ import com.zebra.sdk.printer.PrinterStatus
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -49,17 +51,26 @@ class ZebraPrint(private val context: Context) {
 
 	private suspend fun searchPrinterThenPrint(zpl: String): Result<PrintResponse> {
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
-		val discoveryResult = discoverPrinters()
-		withContext(Dispatchers.Main) { if (discoveryResult.isFailure) sharedDialog?.dismiss() }
-		val printer: DiscoveredPrinter
-		withContext(Dispatchers.Main) { printer = showPrinterListDialog(discoveryResult.getOrThrow()) }
-		val saved = saveSelectedPrinter(printer)
-		return printZPL(printerName = printer.getFriendlyName(), printerAddress = printer.address, zpl = zpl)
+		var printer: DiscoveredPrinter? = null
+		try {
+			discoverPrinters()
+				.collect { printerList ->
+					withContext(Dispatchers.Main) { printer = showPrinterListDialog(printerList) }
+				}
+		} catch (e: Exception) {
+			sharedDialog?.dismiss()
+			throw e
+		}
+		printer?.let {
+			val saved = saveSelectedPrinter(it)
+			return printZPL(printerName = it.getFriendlyName(), printerAddress = it.address, zpl = zpl)
+		} ?: throw PrinterDiscoveryCancelledException()
 	}
 
 	private var sharedDialog: AlertDialog? = null
 	private suspend fun showPrinterListDialog(printerList: List<DiscoveredPrinter>): DiscoveredPrinter {
 		return suspendCoroutine<DiscoveredPrinter> { continuation ->
+			Timber.d("Showing printer list dialog with ${printerList.size} printers")
 			sharedDialog?.dismiss()
 
 			val builder = MaterialAlertDialogBuilder(context)
@@ -101,7 +112,7 @@ class ZebraPrint(private val context: Context) {
 		}
 	}
 
-	private suspend fun discoverPrinters(filter: DeviceFilter? = null): Result<List<DiscoveredPrinter>> {
+	private suspend fun discoverPrinters(filter: DeviceFilter? = null): Flow<List<DiscoveredPrinter>> {
 		return withContext(Dispatchers.IO) {
 			printerFinder.discoverPrinters(filter)
 		}
