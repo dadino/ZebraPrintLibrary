@@ -4,9 +4,9 @@
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	xmlns:tools="http://schemas.android.com/tools"
 	android:id="@+id/printer_root"
-	android:background="?selectableItemBackground"
 	android:layout_width="match_parent"
-	android:layout_height="wrap_content">
+	android:layout_height="wrap_content"
+	android:background="?selectableItemBackground">
 
 	<TextView
 		android:id="@+id/printer_name"
@@ -19,7 +19,7 @@
 		app:layout_constraintBottom_toTopOf="@+id/printer_address"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.5"
-		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/printer_type_icon"
 		app:layout_constraintTop_toTopOf="parent"
 		app:layout_constraintVertical_chainStyle="packed"
 		tools:text="Bluetooth Printer" />
@@ -35,7 +35,20 @@
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintHorizontal_bias="0.5"
-		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/printer_type_icon"
 		app:layout_constraintTop_toBottomOf="@+id/printer_name"
 		tools:text="43:12:32:ed:34:35" />
+
+	<ImageView
+		android:id="@+id/printer_type_icon"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginStart="16dp"
+		android:layout_marginTop="16dp"
+		android:layout_marginBottom="16dp"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		app:srcCompat="@drawable/ic_printer_type_bluetooth"
+		app:tint="?colorOnSurface" />
 </androidx.constraintlayout.widget.ConstraintLayout>

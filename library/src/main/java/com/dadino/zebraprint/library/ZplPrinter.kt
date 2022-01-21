@@ -8,12 +8,19 @@ import kotlinx.coroutines.withContext
 
 object ZplPrinter {
 
+	suspend fun printByteArray(printerConnection: Connection, byteArray: ByteArray) {
+		return withContext(Dispatchers.IO) {
+			if (printerConnection.isConnected.not()) printerConnection.open()
+
+			printerConnection.write(byteArray)
+		}
+	}
+
 	suspend fun printZPL(printerConnection: Connection, zpl: String) {
 		return withContext(Dispatchers.IO) {
 			if (printerConnection.isConnected.not()) printerConnection.open()
 
 			printerConnection.write(zpl.toByteArray())
-			//printerConnection.close()
 		}
 	}
 
@@ -21,7 +28,6 @@ object ZplPrinter {
 		return withContext(Dispatchers.IO) {
 			val printer: ZebraPrinter = ZebraPrinterFactory.getLinkOsPrinter(printerConnection)
 			printer.printStoredFormat(templateName, data)
-			printerConnection.close()
 		}
 	}
 }

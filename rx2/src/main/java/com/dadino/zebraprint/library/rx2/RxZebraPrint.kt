@@ -14,15 +14,27 @@ import kotlin.coroutines.EmptyCoroutineContext
 class RxZebraPrint(private val context: Context, private val coroutineContext: CoroutineContext = EmptyCoroutineContext) {
 	private val zebraPrint: ZebraPrint by lazy { ZebraPrint(context) }
 
-	fun tryPrint(zpl: String, printerName: String?, printerAddress: String?): Single<PrintResponse> {
-		return rxSingle<PrintResponse>(coroutineContext) {
-			zebraPrint.tryPrint(zpl = zpl, printerName = printerName, printerAddress = printerAddress).getOrThrow()
+	fun printZplWithSelectedPrinter(zpl: String): Single<PrintResponse> {
+		return rxSingle(coroutineContext) {
+			zebraPrint.printZplWithSelectedPrinter(zpl = zpl).getOrThrow()
 		}
 	}
 
-	fun printZPLWithLastUsedPrinter(zpl: String): Single<PrintResponse> {
-		return rxSingle<PrintResponse>(coroutineContext) {
-			zebraPrint.printZPLWithLastUsedPrinter(zpl = zpl).getOrThrow()
+	fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>): Single<PrintResponse> {
+		return rxSingle(coroutineContext) {
+			zebraPrint.printTemplateWithSelectedPrinter(templateName = templateName, data = data).getOrThrow()
+		}
+	}
+
+	fun printByteArrayWithSelectedPrinter(byteArray: ByteArray): Single<PrintResponse> {
+		return rxSingle(coroutineContext) {
+			zebraPrint.printByteArrayWithSelectedPrinter(byteArray = byteArray).getOrThrow()
+		}
+	}
+
+	fun searchPrinterAndSave(byteArray: ByteArray): Completable {
+		return rxCompletable(coroutineContext) {
+			zebraPrint.searchPrinterAndSave()
 		}
 	}
 

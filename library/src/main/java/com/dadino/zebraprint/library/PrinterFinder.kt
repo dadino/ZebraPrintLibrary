@@ -14,19 +14,17 @@ import timber.log.Timber
 
 class PrinterFinder(private val context: Context) {
 
-	suspend fun discoverPrinters(filter: DeviceFilter?): Flow<List<DiscoveredPrinter>> {
+	suspend fun discoverPrinters(filter: DeviceFilter?): Flow<List<Printer>> {
 		return callbackFlow {
 			Timber.d("Discovery started")
-			var printerList = listOf<DiscoveredPrinter>()
+			var printerList = listOf<Printer>()
 
-			val handler = object : DiscoveryHandler {
-				override fun foundPrinter(printer: DiscoveredPrinter) {
-					for (settingsKey in printer.discoveryDataMap.keys) {
-						Timber.d("Key: $settingsKey, Value: ${printer.getFriendlyName()}")
-					}
+			val bluetoothDiscoveryHandler = object : DiscoveryHandler {
+				override fun foundPrinter(discoveredPrinter: DiscoveredPrinter) {
+					val printer = Printer.fromDiscoveredPrinter(discoveredPrinter, PrinterType.Bluetooth)
 					printerList = printerList.map { oldPrinter ->
 						if (oldPrinter.address == printer.address) {
-							Timber.d("Printer updated: ${printer.getFriendlyName()} (${printer.address})")
+							Timber.d("Printer updated: ${printer.friendlyName} (${printer.address})")
 							printer
 						} else {
 							oldPrinter
@@ -34,7 +32,7 @@ class PrinterFinder(private val context: Context) {
 					}
 
 					if (printerList.none { it.address == printer.address }) {
-						Timber.d("Printer found: ${printer.getFriendlyName()} (${printer.address})")
+						Timber.d("Printer found: ${printer.friendlyName} (${printer.address})")
 						printerList = printerList + printer
 					}
 
@@ -55,8 +53,8 @@ class PrinterFinder(private val context: Context) {
 					cancel(error, RuntimeException(error))
 				}
 			}
-			if (filter != null) BluetoothDiscoverer.findPrinters(context, handler, filter)
-			else BluetoothDiscoverer.findPrinters(context, handler)
+			if (filter != null) BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter)
+			else BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler)
 
 			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one
 			// NetworkDiscoverer.findPrinters(handler)
