@@ -17,14 +17,16 @@ class ZebraPrint(private val context: Context) {
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(context) }
 
 	fun printZPLWithLastUsedPrinter(zpl: String): Completable {
-		return beginZPLPrinting(zpl = zpl, printerAddress = lastUsedPrinterAddress)
+		return loadSelectedPrinter()
+			.flatMapCompletable { printerAddress ->
+				beginZPLPrinting(zpl = zpl, printerAddress = printerAddress.element())
+			}
 	}
 
-	private fun beginZPLPrinting(zpl: String, printerAddress: String?): Completable {
+	fun beginZPLPrinting(zpl: String, printerAddress: String?): Completable {
 		return if (printerAddress != null) printZPL(address = printerAddress, zpl = zpl)
 		else {
 			findPrinter()
-				.doOnTerminate { sharedDialog?.dismiss() }
 				.flatMapCompletable { update ->
 					when (update) {
 						DiscoveryStatus.DiscoveryInProgress   -> showPrinterDiscoveryDialog().ignoreElement()
@@ -32,9 +34,9 @@ class ZebraPrint(private val context: Context) {
 							.flatMap { printer -> saveSelectedPrinter(printer) }
 							.flatMapCompletable { printerAddress -> printZPL(printerAddress, zpl) }
 						DiscoveryStatus.DiscoveryCompleted    -> Completable.complete()
-						is DiscoveryStatus.DiscoveryError     -> Completable.error(update.error)
 					}
 				}
+				.doOnTerminate { sharedDialog?.dismiss() }
 		}
 	}
 
@@ -54,6 +56,8 @@ class ZebraPrint(private val context: Context) {
 			}) { dialog, _ ->
 				dialog.dismiss()
 			}
+			builder.setCancelable(true)
+			builder.setOnCancelListener { emitter.onError(PrinterDiscoveryCancelledException()) }
 			sharedDialog = builder.show()
 		}.onMain()
 	}
@@ -65,21 +69,14 @@ class ZebraPrint(private val context: Context) {
 			val builder = MaterialAlertDialogBuilder(context)
 
 			builder.setView(R.layout.dialog_printer_discovery)
-
+			builder.setCancelable(true)
+			builder.setOnCancelListener { emitter.onError(PrinterDiscoveryCancelledException()) }
 			sharedDialog = builder.show()
 		}.onMain()
 	}
 
-	private fun showPrintInProgressDialog(): Single<Boolean> {
-		return Single.create<Boolean> { emitter ->
-			sharedDialog?.dismiss()
-
-			val builder = MaterialAlertDialogBuilder(context)
-			builder.setView(R.layout.dialog_print_in_progress)
-
-			sharedDialog = builder.show()
-			emitter.onSuccess(true)
-		}.onMain()
+	private fun loadSelectedPrinter(): Single<Optional<String>> {
+		return Single.just(Optional.create(lastUsedPrinterAddress))
 	}
 
 	private fun saveSelectedPrinter(printer: DiscoveredPrinter): Single<String> {
@@ -95,15 +92,12 @@ class ZebraPrint(private val context: Context) {
 	}
 
 	private fun printZPL(address: String, zpl: String): Completable {
-		return showPrintInProgressDialog()
-			.map { getConnectionToAddress(address) }
+		return Single.just(getConnectionToAddress(address))
 			.flatMapCompletable { connection ->
 				ZplPrinter.printZPL(connection, zpl)
 			}
 			.toAsync()
-			.doOnTerminate { sharedDialog?.dismiss() }
 	}
-
 
 	private fun printTemplateWithData(address: String, templateName: String, data: Map<Int, String>): Completable {
 		return Single.just(getConnectionToAddress(address))

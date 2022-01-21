@@ -1,26 +1,31 @@
 package com.dadino.zebraprintlibrary
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.dadino.zebraprint.library.DiscoveryStatus
 import com.dadino.zebraprint.library.StatusReader.printPrinterStatus
 import com.dadino.zebraprint.library.ZebraPrint
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.snackbar.Snackbar
 import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
 
 class DiscoverPrinterActivity : AppCompatActivity() {
+	private val root: View by lazy { findViewById<View>(R.id.root) }
+	private val fab: FloatingActionButton by lazy { findViewById<FloatingActionButton>(R.id.fab) }
 
 	private val zebraPrinter: ZebraPrint by lazy { ZebraPrint(this) }
+
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_discover_printer)
 		Timber.plant(Timber.DebugTree())
 
-		findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { print() }
+		fab.setOnClickListener { print() }
 	}
 
 	private var discoveryDisposable: Disposable? = null
@@ -44,9 +49,17 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private fun print() {
 		printDisposable?.dispose()
 		printDisposable = zebraPrinter.printZPLWithLastUsedPrinter(generateLabel())
+			.toFlowable<Boolean>()
+			.doOnSubscribe { Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show() }
 			.subscribeBy(
-				onComplete = { Timber.d("Label printed") },
-				onError = { it.printStackTrace() }
+				onComplete = {
+					Timber.d("Label printed")
+					Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
+				},
+				onError = {
+					it.printStackTrace()
+					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
+				}
 			)
 	}
 

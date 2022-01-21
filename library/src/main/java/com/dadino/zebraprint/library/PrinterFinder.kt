@@ -48,14 +48,13 @@ class PrinterFinder(private val context: Context) {
 
 					override fun discoveryError(error: String) {
 						Timber.e("Discovery error: $error")
-						emitter.onNext(DiscoveryStatus.DiscoveryError(RuntimeException(error)))
+						emitter.onError(RuntimeException(error))
 					}
 				}
 				if (filter != null) BluetoothDiscoverer.findPrinters(context, handler, filter)
 				else BluetoothDiscoverer.findPrinters(context, handler)
 			}, BackpressureStrategy.LATEST
 		)
-			.onErrorReturn { DiscoveryStatus.DiscoveryError(it) }
 			.toAsync()
 	}
 
@@ -63,7 +62,6 @@ class PrinterFinder(private val context: Context) {
 
 sealed class DiscoveryStatus {
 	object DiscoveryInProgress : DiscoveryStatus()
-	data class DiscoveryError(val error: Throwable) : DiscoveryStatus()
 	data class PrinterListUpdated(val printerList: List<DiscoveredPrinter>) : DiscoveryStatus()
 	object DiscoveryCompleted : DiscoveryStatus()
 }
