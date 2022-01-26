@@ -12,7 +12,7 @@ buildscript {
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDire
+    delete rootProject.buildDir
 }
 
 ext {
