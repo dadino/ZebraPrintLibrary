@@ -3,8 +3,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-     }
+    }
 }
 rootProject.name = "ZebraPrintLibrary"
-include ':app', ':library'
-include ':rx2'
+include ':app', ':library', ':rx2'

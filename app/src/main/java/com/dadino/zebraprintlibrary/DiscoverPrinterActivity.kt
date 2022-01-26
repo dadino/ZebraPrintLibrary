@@ -23,8 +23,8 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val rx2PrintZpl: View by lazy { findViewById<View>(R.id.rx2_print_zpl) }
 	private val rx2Search: View by lazy { findViewById<View>(R.id.rx2_search) }
 
-	private val zebraPrinter: ZebraPrint by lazy { ZebraPrint(this) }
-	private val zebraPrinterRx: RxZebraPrint by lazy { RxZebraPrint(this) }
+	private val zebraPrinter: ZebraPrint = ZebraPrint()
+	private val zebraPrinterRx: RxZebraPrint = RxZebraPrint()
 
 	private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
 
@@ -32,6 +32,10 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_discover_printer)
 		Timber.plant(Timber.DebugTree())
+
+		zebraPrinter.setActivity(this)
+		zebraPrinterRx.setActivity(this)
+
 		requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
 			map.entries.forEach {
 				Timber.d("Permission ${it.key} granted: ${it.value}")
