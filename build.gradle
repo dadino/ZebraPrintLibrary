@@ -1,17 +1,33 @@
 buildscript {
-    ext.kotlin_version = '1.5.30'
+    ext.kotlin_version = '1.6.10'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.0.4'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:1.6.10"
     }
 }
 
-
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+ext {
+    compileSdk = 31
+    minSdk = 21
+    targetSdk = 31
+
+    versionCode = 3
+    versionName = "0.2.1"
+
+    groupId = "io.github.dadino.zebraprintlibrary"
+    artifactIdLibrary = "library"
+    artifactIdRx2 = "rx2"
+
+    ossrhUsername = System.properties['ossrhUsername']
+    ossrhPassword = System.properties['ossrhPassword']
+    sonatypeStagingProfileId = System.properties['sonatypeStagingProfileId']
 }

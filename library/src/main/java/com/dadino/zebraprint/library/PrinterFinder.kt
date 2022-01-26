@@ -5,42 +5,62 @@ import com.zebra.sdk.printer.discovery.BluetoothDiscoverer
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter
 import com.zebra.sdk.printer.discovery.DiscoveryHandler
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import timber.log.Timber
 
 class PrinterFinder(private val context: Context) {
 
-	fun findPrinter(filter: DeviceFilter?): Flowable<DiscoveryStatus> {
-		return Flowable.create<DiscoveryStatus>(
-			{ emitter ->
-				Timber.d("Discovery started")
-				emitter.onNext(DiscoveryStatus.DiscoveryInProgress)
-				BluetoothDiscoverer.findPrinters(context, object : DiscoveryHandler {
-					override fun foundPrinter(printer: DiscoveredPrinter) {
-						Timber.d("Printer found: ${printer.address}")
-						emitter.onNext(DiscoveryStatus.PrinterDiscovered(printer))
+	suspend fun discoverPrinters(filter: DeviceFilter?): Flow<List<Printer>> {
+		return callbackFlow {
+			Timber.d("Discovery started")
+			var printerList = listOf<Printer>()
+
+			val bluetoothDiscoveryHandler = object : DiscoveryHandler {
+				override fun foundPrinter(discoveredPrinter: DiscoveredPrinter) {
+					val printer = Printer.fromDiscoveredPrinter(discoveredPrinter, PrinterType.Bluetooth)
+					printerList = printerList.map { oldPrinter ->
+						if (oldPrinter.address == printer.address) {
+							Timber.d("Printer updated: ${printer.friendlyName} (${printer.address})")
+							printer
+						} else {
+							oldPrinter
+						}
 					}
 
-					override fun discoveryFinished() {
-						Timber.d("Discovery finished")
-						emitter.onNext(DiscoveryStatus.DiscoveryCompleted)
+					if (printerList.none { it.address == printer.address }) {
+						Timber.d("Printer found: ${printer.friendlyName} (${printer.address})")
+						printerList = printerList + printer
 					}
 
-					override fun discoveryError(error: String) {
-						Timber.e("Discovery error: $error")
-						emitter.onNext(DiscoveryStatus.DiscoveryError(RuntimeException(error)))
-					}
-				}, filter)
-			}, BackpressureStrategy.LATEST
-		)
-			.onErrorReturn { DiscoveryStatus.DiscoveryError(it) }
+					trySend(printerList)
+						.onFailure { throwable ->
+							throwable?.printStackTrace()
+						}
+				}
+
+				override fun discoveryFinished() {
+					Timber.d("Discovery finished")
+					channel.close(if (printerList.isEmpty()) NoPrinterFoundException() else null)
+				}
+
+				override fun discoveryError(error: String) {
+					Timber.e("Discovery error: $error")
+					cancel(error, RuntimeException(error))
+				}
+			}
+			if (filter != null) BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter)
+			else BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler)
+
+			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one
+			// NetworkDiscoverer.findPrinters(handler)
+
+			awaitClose {
+				//TODO stop discovery
+			}
+		}
 	}
-}
-
-sealed class DiscoveryStatus {
-	object DiscoveryInProgress : DiscoveryStatus()
-	class DiscoveryError(val error: Throwable) : DiscoveryStatus()
-	class PrinterDiscovered(val printer: DiscoveredPrinter) : DiscoveryStatus()
-	object DiscoveryCompleted : DiscoveryStatus()
 }

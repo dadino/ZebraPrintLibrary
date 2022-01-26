@@ -1,56 +1,33 @@
 package com.dadino.zebraprint.library
 
-import android.content.Context
 import com.zebra.sdk.comm.Connection
-import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.ZebraPrinter
 import com.zebra.sdk.printer.ZebraPrinterFactory
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
-import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-class ZplPrinter(private val context: Context) {
+object ZplPrinter {
 
-	fun printZPL(printerConnection: Connection, zpl: String): Flowable<PrintStatus> {
-		return Flowable.create(
-			{ emitter ->
-				Timber.d("ZPL printing started")
-				emitter.onNext(PrintStatus.PrintInProgress)
+	suspend fun printByteArray(printerConnection: Connection, byteArray: ByteArray) {
+		return withContext(Dispatchers.IO) {
+			if (printerConnection.isConnected.not()) printerConnection.open()
 
-				try {
-					printerConnection.open()
-
-					printerConnection.write(zpl.toByteArray())
-				} catch (e: ConnectionException) {
-					Timber.e(e, "ZPL printing error")
-					emitter.onNext(PrintStatus.PrintError(e))
-				} finally {
-					Timber.d("ZPL printing completed")
-					printerConnection.close()
-					emitter.onNext(PrintStatus.PrintCompleted)
-				}
-			}, BackpressureStrategy.LATEST
-		)
+			printerConnection.write(byteArray)
+		}
 	}
 
-	fun printZPLTemplate(printerConnection: Connection, templateName: String, data: Map<Int, String>): Flowable<PrintStatus> {
-		return Flowable.create(
-			{ emitter ->
-				Timber.d("ZPL printing started")
-				emitter.onNext(PrintStatus.PrintInProgress)
+	suspend fun printZPL(printerConnection: Connection, zpl: String) {
+		return withContext(Dispatchers.IO) {
+			if (printerConnection.isConnected.not()) printerConnection.open()
 
-				try {
-					val printer: ZebraPrinter = ZebraPrinterFactory.getLinkOsPrinter(printerConnection)
-					printer.printStoredFormat(templateName, data)
-				} catch (e: ConnectionException) {
-					Timber.e(e, "ZPL printing error")
-					emitter.onNext(PrintStatus.PrintError(e))
-				} finally {
-					Timber.d("ZPL printing completed")
-					printerConnection.close()
-					emitter.onNext(PrintStatus.PrintCompleted)
-				}
-			}, BackpressureStrategy.LATEST
-		)
+			printerConnection.write(zpl.toByteArray())
+		}
+	}
+
+	suspend fun printZPLTemplate(printerConnection: Connection, templateName: String, data: Map<Int, String>) {
+		return withContext(Dispatchers.IO) {
+			val printer: ZebraPrinter = ZebraPrinterFactory.getLinkOsPrinter(printerConnection)
+			printer.printStoredFormat(templateName, data)
+		}
 	}
 }

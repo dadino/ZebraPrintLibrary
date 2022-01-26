@@ -1,0 +1,101 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    if (project.plugins.findPlugin("com.android.library")) {
+        // For Android libraries
+        from android.sourceSets.main.java.srcDirs
+        from android.sourceSets.main.kotlin.srcDirs
+    } else {
+        // For pure Kotlin libraries, in case you have them
+        from sourceSets.main.java.srcDirs
+        from sourceSets.main.kotlin.srcDirs
+    }
+}
+
+artifacts {
+    archives androidSourcesJar
+}
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
+
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId PUBLISH_GROUP_ID
+            artifactId PUBLISH_ARTIFACT_ID
+            version PUBLISH_VERSION
+
+            if (project.plugins.findPlugin("com.android.library")) {
+                artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+            } else {
+                artifact("$buildDir/libs/${project.getName()}-${version}.jar")
+            }
+            artifact androidSourcesJar
+
+            pom {
+                name = PUBLISH_ARTIFACT_ID
+                description = 'ZebraPrintLibrary'
+                url = 'https://github.com/dadino/ZebraPrintLibrary'
+
+                developers {
+                    developer {
+                        id = 'dadino'
+                        name = 'David Corsalini'
+                        email = 'corsalini.david@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:github.com/dadino/ZebraPrintLibrary.git'
+                    developerConnection = 'scm:git:ssh://github.com/dadino/ZebraPrintLibrary.git'
+                    url = 'https://github.com/dadino/ZebraPrintLibrary/tree/master'
+                }
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+
+                    project.configurations.implementation.allDependencies.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "sonatype"
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username rootProject.ext.ossrhUsername
+                password rootProject.ext.ossrhPassword
+            }
+        }
+    }
+}
+
+task printProps {
+    doLast {
+        println "Key Id ${System.properties['signing.keyId']}"
+        println "Key Password ${System.properties['signing.password']}"
+        println "Key File ${System.properties['signing.secretKeyRingFile']}"
+        println "ext OSSRH Username ${rootProject.ext.ossrhUsername}"
+        println "ext OSSRH Password ${rootProject.ext.ossrhPassword}"
+    }
+}
+
+signing {
+    sign publishing.publications.release
+}

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="select_printer">Selezione stampante</string>
+	<string name="printer_discovery_in_progress">Ricerca stampanti in corso…</string>
+	<string name="print_in_progress">Stampa in corso…</string>
+</resources>
