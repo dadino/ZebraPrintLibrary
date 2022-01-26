@@ -1,9 +1,10 @@
 package com.dadino.zebraprint.library
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zebra.sdk.comm.Connection
@@ -18,11 +19,19 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-class ZebraPrint(private val context: Context) {
-
-	private val printerFinder: PrinterFinder by lazy { PrinterFinder(context) }
+class ZebraPrint {
+	private var activity: AppCompatActivity? = null
+	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
-	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { PrefSelectedPrinterRepository(context) }
+	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { PrefSelectedPrinterRepository(requireActivity()) }
+
+	fun setActivity(activity: AppCompatActivity) {
+		this.activity = activity
+	}
+
+	private fun requireActivity(): AppCompatActivity {
+		return activity ?: throw RuntimeException("Context not set in ZebraPrint. Remember to call zebraPrint.setContext(activityContext) before using ZebraPrint APIs")
+	}
 
 	suspend fun printZplWithSelectedPrinter(zpl: String): Result<PrintResponse> {
 		return printWithSelectedPrinter { connection -> ZplPrinter.printZPL(connection, zpl) }
@@ -114,12 +123,14 @@ class ZebraPrint(private val context: Context) {
 			Timber.d("Showing printer list dialog with ${printerList.size} printers")
 			sharedDialog?.dismiss()
 
-			val builder = MaterialAlertDialogBuilder(context)
+			val builder = MaterialAlertDialogBuilder(requireActivity())
+				.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+				.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
 
 			builder.setIcon(R.drawable.ic_printer)
 			builder.setTitle(R.string.select_printer)
 
-			builder.setAdapter(DiscoveredPrinterAdapter(context, printerList) { printer ->
+			builder.setAdapter(DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
 				continuation.resume(printer)
 				sharedDialog?.dismiss()
 			}) { dialog, _ ->
@@ -133,17 +144,29 @@ class ZebraPrint(private val context: Context) {
 
 	private fun showPrinterDiscoveryDialog() {
 		sharedDialog?.dismiss()
-		val builder = MaterialAlertDialogBuilder(context)
+		val builder = MaterialAlertDialogBuilder(requireActivity())
+			.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+			.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
 		builder.setView(R.layout.dialog_printer_discovery)
-		//builder.setCancelable(true)
-		//builder.setOnCancelListener { continuation.resumeWithException(PrinterDiscoveryCancelledException()) }
 		sharedDialog = builder.show()
 	}
 
 	private fun checkPermissions(): Boolean {
-		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			return true
-		} else throw PermissionsRequired(listOf(Manifest.permission.ACCESS_FINE_LOCATION))
+		val notGrantedPermissions = arrayListOf<String>()
+		getPermissionRequired().forEach { permission ->
+			if (ContextCompat.checkSelfPermission(requireActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
+				notGrantedPermissions.add(permission)
+			}
+		}
+		if (notGrantedPermissions.isNotEmpty())
+			throw PermissionsRequired(notGrantedPermissions)
+		else return true
+	}
+
+	private fun getPermissionRequired(): List<String> {
+		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+		} else listOf(Manifest.permission.ACCESS_FINE_LOCATION)
 	}
 
 	private suspend fun loadSelectedPrinter(): Printer? {

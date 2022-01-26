@@ -1,6 +1,6 @@
 package com.dadino.zebraprint.library.rx2
 
-import android.content.Context
+import androidx.appcompat.app.AppCompatActivity
 import com.dadino.zebraprint.library.Optional
 import com.dadino.zebraprint.library.PrintResponse
 import com.dadino.zebraprint.library.Printer
@@ -13,8 +13,11 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-class RxZebraPrint(private val context: Context, private val coroutineContext: CoroutineContext = EmptyCoroutineContext) {
-	private val zebraPrint: ZebraPrint by lazy { ZebraPrint(context) }
+class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCoroutineContext) {
+	private val zebraPrint: ZebraPrint = ZebraPrint()
+	fun setActivity(activity: AppCompatActivity) {
+		zebraPrint.setActivity(activity)
+	}
 
 	fun printZplWithSelectedPrinter(zpl: String): Single<PrintResponse> {
 		return rxSingle(coroutineContext) {

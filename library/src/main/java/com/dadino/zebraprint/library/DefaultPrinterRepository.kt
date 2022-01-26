@@ -22,7 +22,7 @@ class PrefSelectedPrinterRepository(context: Context) : ISelectedPrinterReposito
 			val stringRepresentation = Json.encodeToString(printer)
 			prefs.edit()
 				.putString(KEY, stringRepresentation)
-				.apply()
+				.commit()
 		}
 	}
 
