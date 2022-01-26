@@ -3,6 +3,7 @@ package com.dadino.zebraprint.library
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -141,9 +142,21 @@ class ZebraPrint(private val context: Context) {
 	}
 
 	private fun checkPermissions(): Boolean {
-		if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-			return true
-		} else throw PermissionsRequired(listOf(Manifest.permission.ACCESS_FINE_LOCATION))
+		val notGrantedPermissions = arrayListOf<String>()
+		getPermissionRequired().forEach { permission ->
+			if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+				notGrantedPermissions.add(permission)
+			}
+		}
+		if (notGrantedPermissions.isNotEmpty())
+			throw PermissionsRequired(notGrantedPermissions)
+		else return true
+	}
+
+	private fun getPermissionRequired(): List<String> {
+		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+			listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+		} else listOf(Manifest.permission.ACCESS_FINE_LOCATION)
 	}
 
 	private suspend fun loadSelectedPrinter(): Printer? {
