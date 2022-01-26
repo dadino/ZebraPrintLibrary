@@ -2,7 +2,6 @@ package com.dadino.zebraprint.library
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
@@ -16,7 +15,8 @@ interface ISelectedPrinterRepository {
 }
 
 class PrefSelectedPrinterRepository(context: Context) : ISelectedPrinterRepository {
-	private val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+	private val prefs: SharedPreferences = context.getSharedPreferences("ZebraPrintLibraryPrefs", Context.MODE_PRIVATE)
+
 	override suspend fun savePrinter(printer: Printer) {
 		return withContext(Dispatchers.IO) {
 			val stringRepresentation = Json.encodeToString(printer)

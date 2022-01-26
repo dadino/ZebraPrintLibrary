@@ -3,7 +3,8 @@ plugins {
     id 'kotlin-android'
 }
 
-android { compileSdkVersion rootProject.compileSdk
+android {
+    compileSdkVersion rootProject.compileSdk
 
     defaultConfig {
         applicationId "com.dadino.zebraprintlibrary.sample"
@@ -16,10 +17,28 @@ android { compileSdkVersion rootProject.compileSdk
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        releaseConfig {
+            storeFile file("zebra_print_library_sample_key.jks")
+            storePassword("zebraprint")
+            keyAlias "Dadino"
+            keyPassword "zebraprint"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            debuggable false
+            signingConfig signingConfigs.releaseConfig
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            matchingFallbacks = ['release']
+        }
+        debug {
+            initWith(release)
+            debuggable true
+            minifyEnabled false
+            versionNameSuffix '-DEBUG'
+            matchingFallbacks = ['debug']
         }
     }
     compileOptions {

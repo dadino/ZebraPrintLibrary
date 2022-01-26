@@ -57,17 +57,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.INVISIBLE
 			} catch (e: Exception) {
-				when (e) {
-					is PermissionsRequired -> {
-						requestPermissionsForPrinter(e.permissionList)
-					}
-					else                   -> {
-						Timber.e(e)
-						Timber.d("Print flow error")
-						Snackbar.make(root, e.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
-					}
-				}
-				progressBar.visibility = View.INVISIBLE
+				onError(e, "print")
 			}
 		}
 	}
@@ -87,10 +77,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				Snackbar.make(root, "Printer saved", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.INVISIBLE
 			} catch (e: Exception) {
-				Timber.e(e)
-				Timber.d("Search flow error")
-				Snackbar.make(root, e.message ?: "Search error", Snackbar.LENGTH_SHORT).show()
-				progressBar.visibility = View.INVISIBLE
+				onError(e, "search")
 			}
 		}
 	}
@@ -110,9 +97,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				progressBar.visibility = View.INVISIBLE
 			},
 				onError = {
-					Timber.d("Print flow error")
-					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
-					progressBar.visibility = View.INVISIBLE
+					onError(it, "print")
 				})
 	}
 
@@ -131,10 +116,22 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				progressBar.visibility = View.INVISIBLE
 			},
 				onError = {
-					Timber.d("Search flow error")
-					Snackbar.make(root, it.message ?: "Print error", Snackbar.LENGTH_SHORT).show()
-					progressBar.visibility = View.INVISIBLE
+					onError(it, "search")
 				})
+	}
+
+	private fun onError(e: Throwable, functionName: String) {
+		when (e) {
+			is PermissionsRequired -> {
+				requestPermissionsForPrinter(e.permissionList)
+			}
+			else                   -> {
+				Timber.e(e)
+				Timber.d("$functionName flow error")
+				Snackbar.make(root, e.message ?: "$functionName error", Snackbar.LENGTH_SHORT).show()
+			}
+		}
+		progressBar.visibility = View.INVISIBLE
 	}
 
 	private fun generateLabel(): String {
