@@ -76,8 +76,8 @@ dependencies {
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     //Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
 
     //RxJava
