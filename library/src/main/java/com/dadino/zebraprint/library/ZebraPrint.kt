@@ -71,7 +71,7 @@ class ZebraPrint {
 					if (printResult.isSuccess) printResult
 					else {
 						val exception = printResult.exceptionOrNull()
-						if (exception is PrinterNotReadyToPrint) throw exception
+						if (exception is PrinterNotReadyToPrintException) throw exception
 						else searchPrinterThenPrint(printAction = printAction)
 					}
 				} catch (e: ConnectionException) {
@@ -168,7 +168,7 @@ class ZebraPrint {
 			}
 		}
 		if (notGrantedPermissions.isNotEmpty())
-			throw PermissionsRequired(notGrantedPermissions)
+			throw PermissionsRequiredException(notGrantedPermissions)
 		else return true
 	}
 
@@ -214,7 +214,7 @@ class ZebraPrint {
 					printAction(printerConnection)
 					Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
 				} else {
-					Result.failure(PrinterNotReadyToPrint(status))
+					Result.failure(PrinterNotReadyToPrintException(status))
 				}
 			} catch (e: Exception) {
 				Result.failure(e)
