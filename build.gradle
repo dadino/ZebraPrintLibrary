@@ -1,5 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.6.10'
+    ext.coroutines_version = '1.6.0'
     repositories {
         google()
         mavenCentral()
@@ -7,12 +8,12 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-serialization:1.6.10"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
 }
 
 task clean(type: Delete) {
-    delete rootProject.buildDire
+    delete rootProject.buildDir
 }
 
 ext {
@@ -20,8 +21,8 @@ ext {
     minSdk = 21
     targetSdk = 31
 
-    versionCode = 5
-    versionName = "0.2.3"
+    versionCode = 6
+    versionName = "0.2.4"
 
     groupId = "io.github.dadino.zebraprintlibrary"
     artifactIdLibrary = "library"

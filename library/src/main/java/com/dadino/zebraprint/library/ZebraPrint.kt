@@ -6,6 +6,8 @@ import android.os.Build
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.ConnectionException
@@ -13,6 +15,7 @@ import com.zebra.sdk.printer.PrinterStatus
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.coroutines.resume
@@ -27,6 +30,12 @@ class ZebraPrint {
 
 	fun setActivity(activity: AppCompatActivity) {
 		this.activity = activity
+		activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
+			override fun onDestroy(owner: LifecycleOwner) {
+				runBlocking { closeConnections() }
+				super.onDestroy(owner)
+			}
+		})
 	}
 
 	private fun requireActivity(): AppCompatActivity {
@@ -62,7 +71,7 @@ class ZebraPrint {
 					if (printResult.isSuccess) printResult
 					else {
 						val exception = printResult.exceptionOrNull()
-						if (exception is PrinterNotReadyToPrint) throw exception
+						if (exception is PrinterNotReadyToPrintException) throw exception
 						else searchPrinterThenPrint(printAction = printAction)
 					}
 				} catch (e: ConnectionException) {
@@ -159,7 +168,7 @@ class ZebraPrint {
 			}
 		}
 		if (notGrantedPermissions.isNotEmpty())
-			throw PermissionsRequired(notGrantedPermissions)
+			throw PermissionsRequiredException(notGrantedPermissions)
 		else return true
 	}
 
@@ -205,7 +214,7 @@ class ZebraPrint {
 					printAction(printerConnection)
 					Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
 				} else {
-					Result.failure(PrinterNotReadyToPrint(status))
+					Result.failure(PrinterNotReadyToPrintException(status))
 				}
 			} catch (e: Exception) {
 				Result.failure(e)

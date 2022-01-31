@@ -6,7 +6,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.dadino.zebraprint.library.PermissionsRequired
+import com.dadino.zebraprint.library.PermissionsRequiredException
 import com.dadino.zebraprint.library.ZebraPrint
 import com.dadino.zebraprint.library.rx2.RxZebraPrint
 import com.google.android.material.snackbar.Snackbar
@@ -126,10 +126,10 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 
 	private fun onError(e: Throwable, functionName: String) {
 		when (e) {
-			is PermissionsRequired -> {
+			is PermissionsRequiredException -> {
 				requestPermissionsForPrinter(e.permissionList)
 			}
-			else                   -> {
+			else                            -> {
 				Timber.e(e)
 				Timber.d("$functionName flow error")
 				Snackbar.make(root, e.message ?: "$functionName error", Snackbar.LENGTH_SHORT).show()
