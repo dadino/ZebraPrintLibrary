@@ -33,16 +33,13 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            debuggable false
             signingConfig signingConfigs.releaseConfig
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             matchingFallbacks = ['release']
         }
         debug {
             initWith(release)
-            debuggable true
             minifyEnabled false
-            versionNameSuffix '-DEBUG'
             matchingFallbacks = ['debug']
         }
     }
@@ -51,11 +48,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
     packagingOptions {
-        exclude 'META-INF/*'
-        exclude 'META-INF/**/*'
+        jniLibs {
+            excludes += ['META-INF/*', 'META-INF/**/*']
+        }
+        resources {
+            excludes += ['META-INF/*', 'META-INF/**/*']
+        }
     }
+
 }
 
 dependencies {
