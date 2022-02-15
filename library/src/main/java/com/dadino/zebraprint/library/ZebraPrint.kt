@@ -26,7 +26,7 @@ class ZebraPrint {
 	private var activity: AppCompatActivity? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
-	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { PrefSelectedPrinterRepository(requireActivity()) }
+	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(requireActivity()) }
 
 	fun setActivity(activity: AppCompatActivity) {
 		this.activity = activity
@@ -122,8 +122,9 @@ class ZebraPrint {
 		} ?: throw PrinterDiscoveryCancelledException()
 	}
 
-	suspend fun getSelectedPrinter(): Printer? {
-		return selectedPrinterRepo.loadPrinter()
+
+	suspend fun getSelectedPrinter(): Flow<Printer?> {
+		return selectedPrinterRepo.getPrinter()
 	}
 
 	private var sharedDialog: AlertDialog? = null
@@ -178,7 +179,7 @@ class ZebraPrint {
 		} else listOf(Manifest.permission.ACCESS_FINE_LOCATION)
 	}
 
-	private suspend fun loadSelectedPrinter(): Printer? {
+	suspend fun loadSelectedPrinter(): Printer? {
 		return selectedPrinterRepo.loadPrinter()
 	}
 

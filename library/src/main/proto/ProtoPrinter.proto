@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package com.dadino.zebraprint.library;
+message ProtoPrinter {
+  string address = 1;
+  string friendly_name = 2;
+  string type_id = 3;
+}

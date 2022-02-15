@@ -6,8 +6,10 @@ import com.dadino.zebraprint.library.PrintResponse
 import com.dadino.zebraprint.library.Printer
 import com.dadino.zebraprint.library.ZebraPrint
 import io.reactivex.Completable
+import io.reactivex.Flowable
 import io.reactivex.Single
 import kotlinx.coroutines.rx2.rxCompletable
+import kotlinx.coroutines.rx2.rxFlowable
 import kotlinx.coroutines.rx2.rxSingle
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -43,9 +45,18 @@ class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCorouti
 		}
 	}
 
-	fun getSelectedPrinter(): Single<Optional<Printer>> {
+	fun loadSelectedPrinter(): Single<Optional<Printer>> {
 		return rxSingle(coroutineContext) {
-			Optional.create(zebraPrint.getSelectedPrinter())
+			Optional.create(zebraPrint.loadSelectedPrinter())
+		}
+	}
+
+	fun getSelectedPrinter(): Flowable<Optional<Printer>> {
+		return rxFlowable(coroutineContext) {
+			zebraPrint.getSelectedPrinter()
+				.collect { printer ->
+					this.send(Optional.create(printer))
+				}
 		}
 	}
 

@@ -2,6 +2,7 @@ package com.dadino.zebraprintlibrary
 
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -10,6 +11,7 @@ import com.dadino.zebraprint.library.PermissionsRequiredException
 import com.dadino.zebraprint.library.ZebraPrint
 import com.dadino.zebraprint.library.rx2.RxZebraPrint
 import com.google.android.material.snackbar.Snackbar
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.coroutines.launch
@@ -20,8 +22,10 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val progressBar: View by lazy { findViewById<View>(R.id.progressBar) }
 	private val coroutinesPrintZpl: View by lazy { findViewById<View>(R.id.coroutines_print_zpl) }
 	private val coroutinesSearch: View by lazy { findViewById<View>(R.id.coroutines_search) }
+	private val coroutinesSelectedPrinter: TextView by lazy { findViewById<TextView>(R.id.coroutines_selected_printer) }
 	private val rx2PrintZpl: View by lazy { findViewById<View>(R.id.rx2_print_zpl) }
 	private val rx2Search: View by lazy { findViewById<View>(R.id.rx2_search) }
+	private val rx2SelectedPrinter: TextView by lazy { findViewById<TextView>(R.id.rx2_selected_printer) }
 
 	private val zebraPrinter: ZebraPrint = ZebraPrint()
 	private val zebraPrinterRx: RxZebraPrint = RxZebraPrint()
@@ -47,6 +51,33 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 
 		rx2PrintZpl.setOnClickListener { printWithRx() }
 		rx2Search.setOnClickListener { searchWithRx() }
+
+		collectSelectedPrinter()
+		subscribeToSelectedPrinter()
+	}
+
+	private fun collectSelectedPrinter() {
+		this.lifecycleScope.launch {
+			zebraPrinter.getSelectedPrinter().collect { printer ->
+				if (printer != null)
+					coroutinesSelectedPrinter.text = "${printer.friendlyName} - ${printer.address} - ${printer.type.id}"
+				coroutinesSelectedPrinter.visibility = if (printer != null) View.VISIBLE else View.GONE
+			}
+		}
+	}
+
+	private fun subscribeToSelectedPrinter() {
+		val a = zebraPrinterRx.getSelectedPrinter()
+			.observeOn(AndroidSchedulers.mainThread())
+			.subscribeBy(
+				onNext = { printerOptional ->
+					val printer = printerOptional.element()
+					if (printer != null)
+						rx2SelectedPrinter.text = "${printer.friendlyName} - ${printer.address} - ${printer.type.id}"
+					rx2SelectedPrinter.visibility = if (printer != null) View.VISIBLE else View.GONE
+				},
+				onError = { it.printStackTrace() }
+			)
 	}
 
 	private fun printWithCoroutines() {
