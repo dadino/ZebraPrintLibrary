@@ -40,6 +40,13 @@
 			android:text="Search for printer" />
 
 		<TextView
+			android:id="@+id/coroutines_selected_printer"
+			style="@style/TextAppearance.MaterialComponents.Body1"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			tools:text="iMZ320 (21:12:21:ab:93)" />
+
+		<TextView
 			android:id="@+id/textView3"
 			style="@style/TextAppearance.MaterialComponents.Overline"
 			android:layout_width="match_parent"
@@ -60,6 +67,14 @@
 			android:layout_height="wrap_content"
 			android:layout_marginTop="16dp"
 			android:text="Search for printer" />
+
+		<TextView
+			android:id="@+id/rx2_selected_printer"
+			style="@style/TextAppearance.MaterialComponents.Body1"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			tools:text="iMZ320 (21:12:21:ab:93)" />
+
 	</LinearLayout>
 
 	<ProgressBar

@@ -26,7 +26,7 @@ class ZebraPrint {
 	private var activity: AppCompatActivity? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
-	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { PrefSelectedPrinterRepository(requireActivity()) }
+	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(requireActivity()) }
 
 	fun setActivity(activity: AppCompatActivity) {
 		this.activity = activity
@@ -39,7 +39,7 @@ class ZebraPrint {
 	}
 
 	private fun requireActivity(): AppCompatActivity {
-		return activity ?: throw RuntimeException("Context not set in ZebraPrint. Remember to call zebraPrint.setContext(activityContext) before using ZebraPrint APIs")
+		return activity ?: throw RuntimeException("Activity not set in ZebraPrint. Remember to call zebraPrint.setActivity(activity) before using ZebraPrint APIs")
 	}
 
 	suspend fun printZplWithSelectedPrinter(zpl: String): Result<PrintResponse> {
@@ -122,8 +122,9 @@ class ZebraPrint {
 		} ?: throw PrinterDiscoveryCancelledException()
 	}
 
-	suspend fun getSelectedPrinter(): Printer? {
-		return selectedPrinterRepo.loadPrinter()
+
+	suspend fun getSelectedPrinter(): Flow<Printer?> {
+		return selectedPrinterRepo.getPrinter()
 	}
 
 	private var sharedDialog: AlertDialog? = null
@@ -178,7 +179,7 @@ class ZebraPrint {
 		} else listOf(Manifest.permission.ACCESS_FINE_LOCATION)
 	}
 
-	private suspend fun loadSelectedPrinter(): Printer? {
+	suspend fun loadSelectedPrinter(): Printer? {
 		return selectedPrinterRepo.loadPrinter()
 	}
 
@@ -210,8 +211,16 @@ class ZebraPrint {
 				val statusResult = readPrinterStatus(printerAddress)
 				val status = statusResult.getOrThrow()
 				if (status.isReadyToPrint) {
-					val printerConnection = connectionHandler.getConnectionToAddress(printerAddress)
-					printAction(printerConnection)
+					try {
+						actuallyPrint(printAction, printerAddress, printerName, false)
+					} catch (e: Throwable) {
+						if (e is ConnectionException) {
+							Timber.e("Print failed with ConnectionException")
+							actuallyPrint(printAction, printerAddress, printerName, true)
+						} else {
+							Result.failure<PrintResponse>(e)
+						}
+					}
 					Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
 				} else {
 					Result.failure(PrinterNotReadyToPrintException(status))
@@ -222,9 +231,19 @@ class ZebraPrint {
 		}
 	}
 
+	private suspend fun actuallyPrint(printAction: suspend (Connection) -> Unit, printerAddress: String, printerName: String?, forceReconnection: Boolean) {
+		printAction(connectionHandler.getConnectionToAddress(printerAddress, forceReconnection = forceReconnection))
+		Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
+	}
+
 	private suspend fun readPrinterStatus(address: String): Result<PrinterStatus> {
 		return withContext(Dispatchers.IO) {
-			StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address))
+			val result = StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address, forceReconnection = false))
+			if (result.isFailure && result.exceptionOrNull() is ConnectionException) {
+				Timber.e("Read printer status failed with ConnectionException")
+				result.exceptionOrNull()?.printStackTrace()
+				StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address, forceReconnection = true))
+			} else result
 		}
 	}
 
