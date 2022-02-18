@@ -2,7 +2,6 @@ package com.dadino.zebraprint.library
 
 import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.ConnectionException
-import com.zebra.sdk.printer.PrinterStatus
 import com.zebra.sdk.printer.ZebraPrinter
 import com.zebra.sdk.printer.ZebraPrinterFactory
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +11,7 @@ import timber.log.Timber
 
 object StatusReader {
 
-	suspend fun readPrinterStatus(printerConnection: Connection): Result<PrinterStatus> {
+	suspend fun readPrinterState(printerConnection: Connection): Result<PrinterState> {
 		return withContext(Dispatchers.IO) {
 			val result = try {
 				Timber.d("Status reading started")
@@ -20,7 +19,7 @@ object StatusReader {
 
 				val printer: ZebraPrinter = ZebraPrinterFactory.getInstance(printerConnection)
 
-				val printerStatus: PrinterStatus = printer.currentStatus
+				val printerStatus: PrinterState = PrinterState.fromPrinterStatus(printer.currentStatus)
 				Timber.d("Printer status: ${printPrinterStatus(printerStatus)}")
 				Result.success(printerStatus)
 			} catch (e: ConnectionException) {
@@ -34,7 +33,7 @@ object StatusReader {
 		}
 	}
 
-	fun printPrinterStatus(status: PrinterStatus): String {
+	fun printPrinterStatus(status: PrinterState): String {
 		return "is ready to print: ${status.isReadyToPrint}\n" +
 				"is paused: ${status.isPaused}\n" +
 				"is head open: ${status.isHeadOpen}\n" +
@@ -44,3 +43,4 @@ object StatusReader {
 				"is ribbon: ${status.isRibbonOut}"
 	}
 }
+

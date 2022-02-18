@@ -11,7 +11,6 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.ConnectionException
-import com.zebra.sdk.printer.PrinterStatus
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -236,13 +235,13 @@ class ZebraPrint {
 		Result.success(PrintResponse(printerName = printerName, printerAddress = printerAddress))
 	}
 
-	private suspend fun readPrinterStatus(address: String): Result<PrinterStatus> {
+	private suspend fun readPrinterStatus(address: String): Result<PrinterState> {
 		return withContext(Dispatchers.IO) {
-			val result = StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address, forceReconnection = false))
+			val result = StatusReader.readPrinterState(connectionHandler.getConnectionToAddress(address, forceReconnection = false))
 			if (result.isFailure && result.exceptionOrNull() is ConnectionException) {
 				Timber.e("Read printer status failed with ConnectionException")
 				result.exceptionOrNull()?.printStackTrace()
-				StatusReader.readPrinterStatus(connectionHandler.getConnectionToAddress(address, forceReconnection = true))
+				StatusReader.readPrinterState(connectionHandler.getConnectionToAddress(address, forceReconnection = true))
 			} else result
 		}
 	}
