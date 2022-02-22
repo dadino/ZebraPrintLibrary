@@ -25,7 +25,7 @@ import timber.log.Timber
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class ZebraPrint {
+class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = false) {
 	private var activity: AppCompatActivity? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
@@ -221,7 +221,7 @@ class ZebraPrint {
 
 	private suspend fun discoverPrinters(filter: DeviceFilter? = null): Flow<List<Printer>> {
 		return withContext(Dispatchers.IO) {
-			printerFinder.discoverPrinters(filter)
+			printerFinder.discoverPrinters(filter, useStrictFilteringForGenericDevices)
 		}
 	}
 

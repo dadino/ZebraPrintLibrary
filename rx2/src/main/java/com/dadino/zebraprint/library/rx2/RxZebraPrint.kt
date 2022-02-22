@@ -15,8 +15,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCoroutineContext) {
-	private val zebraPrint: ZebraPrint = ZebraPrint()
+class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCoroutineContext, private val useStrictFilteringForGenericDevices: Boolean) {
+	private val zebraPrint: ZebraPrint = ZebraPrint(useStrictFilteringForGenericDevices)
 	fun setActivity(activity: AppCompatActivity) {
 		zebraPrint.setActivity(activity)
 	}

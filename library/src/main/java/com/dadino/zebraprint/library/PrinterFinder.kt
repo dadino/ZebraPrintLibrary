@@ -13,7 +13,7 @@ import timber.log.Timber
 
 class PrinterFinder(private val context: Context) {
 
-	suspend fun discoverPrinters(filter: DeviceFilter?): Flow<List<Printer>> {
+	suspend fun discoverPrinters(filter: DeviceFilter?, useStrictFilteringForGenericDevices: Boolean): Flow<List<Printer>> {
 		return callbackFlow {
 			Timber.d("Discovery started")
 			var printerList = listOf<Printer>()
@@ -51,8 +51,8 @@ class PrinterFinder(private val context: Context) {
 					cancel(error, RuntimeException(error))
 				}
 			}
-			if (filter != null) CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter)
-			else CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler)
+			CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter, useStrictFilteringForGenericDevices)
+
 
 			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one
 			// NetworkDiscoverer.findPrinters(handler)

@@ -21,7 +21,12 @@ import com.zebra.sdk.printer.discovery.ServiceDiscoveryHandler
 import timber.log.Timber
 
 
-class CustomBluetoothDiscoverer private constructor(private val context: Context, private val discoveryHandler: DiscoveryHandler, private val deviceFilter: DeviceFilter?) {
+class CustomBluetoothDiscoverer private constructor(
+	private val context: Context,
+	private val discoveryHandler: DiscoveryHandler,
+	private val deviceFilter: DeviceFilter?,
+	private val useStrictFilteringForGenericDevices: Boolean
+) {
 	private var btReceiver: BtReceiver? = null
 	private var btMonitor: BtRadioMonitor? = null
 
@@ -109,24 +114,26 @@ class CustomBluetoothDiscoverer private constructor(private val context: Context
 		}
 
 		private fun isPrinterGenericClass(bluetoothDevice: BluetoothDevice): Boolean {
-			return if (bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED) {
-				val uuids = bluetoothDevice.uuids
+			return if (useStrictFilteringForGenericDevices) {
+				if (bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED) {
+					val uuids = bluetoothDevice.uuids
 
-				if (uuids == null || uuids.isEmpty()) {
-					bluetoothDevice.fetchUuidsWithSdp()
-					false
-				} else {
-					Timber.d("Generic bluetooth device ${bluetoothDevice.name} (${bluetoothDevice.address}) has the following services: ${uuids.joinToString(", ") { it.uuid.toString() }}")
-					uuids.any { "00001101-0000-1000-8000-00805F9B34FB".equals(it.uuid.toString(), ignoreCase = true) }
-				}
-			} else false
+					if (uuids == null || uuids.isEmpty()) {
+						bluetoothDevice.fetchUuidsWithSdp()
+						false
+					} else {
+						Timber.d("Generic bluetooth device ${bluetoothDevice.name} (${bluetoothDevice.address}) has the following services: ${uuids.joinToString(", ") { it.uuid.toString() }}")
+						uuids.any { "00001101-0000-1000-8000-00805F9B34FB".equals(it.uuid.toString(), ignoreCase = true) }
+					}
+				} else false
+			} else bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED
 		}
 	}
 
 	companion object {
 		@SuppressLint("MissingPermission")
 		@Throws(ConnectionException::class)
-		fun findPrinters(context: Context, discoveryHandler: DiscoveryHandler, deviceFilter: DeviceFilter) {
+		fun findPrinters(context: Context, discoveryHandler: DiscoveryHandler, deviceFilter: DeviceFilter?, useStrictFilteringForGenericDevices: Boolean) {
 			val bluetoothAdapter = (context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
 			if (bluetoothAdapter == null) {
 				discoveryHandler.discoveryError("No bluetooth radio found")
@@ -136,14 +143,8 @@ class CustomBluetoothDiscoverer private constructor(private val context: Context
 				if (bluetoothAdapter.isDiscovering) {
 					bluetoothAdapter.cancelDiscovery()
 				}
-				CustomBluetoothDiscoverer(context.applicationContext, discoveryHandler, deviceFilter).doBluetoothDisco()
+				CustomBluetoothDiscoverer(context.applicationContext, discoveryHandler, deviceFilter, useStrictFilteringForGenericDevices).doBluetoothDisco()
 			}
-		}
-
-		@Throws(ConnectionException::class)
-		fun findPrinters(context: Context, discoveryHandler: DiscoveryHandler) {
-			val var2 = DeviceFilter { true }
-			findPrinters(context, discoveryHandler, var2)
 		}
 
 		fun findServices(context: Context, address: String?, discoveryHandler: ServiceDiscoveryHandler) {
