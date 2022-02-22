@@ -27,8 +27,8 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val rx2Search: View by lazy { findViewById<View>(R.id.rx2_search) }
 	private val rx2SelectedPrinter: TextView by lazy { findViewById<TextView>(R.id.rx2_selected_printer) }
 
-	private val zebraPrinter: ZebraPrint = ZebraPrint()
-	private val zebraPrinterRx: RxZebraPrint = RxZebraPrint()
+	private val zebraPrinter: ZebraPrint = ZebraPrint(useStrictFilteringForGenericDevices = false)
+	private val zebraPrinterRx: RxZebraPrint = RxZebraPrint(useStrictFilteringForGenericDevices = false)
 
 	private lateinit var requestPermissionLauncher: ActivityResultLauncher<Array<String>>
 
