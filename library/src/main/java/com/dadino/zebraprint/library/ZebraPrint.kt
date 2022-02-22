@@ -113,7 +113,7 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 		try {
 			discoverPrinters().onEach { printerList ->
 				Timber.d("ON EACH: New printer list received: ${printerList.joinToString(", ") { it.address }}")
-				updatePrinterListDialog(printerList)
+				withContext(Dispatchers.Main) { updatePrinterListDialog(printerList) }
 			}
 				.buffer(
 					capacity = 0,
