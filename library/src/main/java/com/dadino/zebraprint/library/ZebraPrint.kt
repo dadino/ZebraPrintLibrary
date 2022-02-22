@@ -14,13 +14,16 @@ import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.ConnectionException
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 class ZebraPrint {
 	private var activity: AppCompatActivity? = null
@@ -86,17 +89,7 @@ class ZebraPrint {
 	@SuppressLint("MissingPermission")
 	private suspend fun searchPrinterThenPrint(printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
-		var printer: Printer? = null
-		try {
-			discoverPrinters().collect { printerList ->
-				withContext(Dispatchers.Main) {
-					printer = showPrinterListDialog(printerList)
-				}
-			}
-		} catch (e: Exception) {
-			sharedDialog?.dismiss()
-			throw e
-		}
+		val printer: Printer? = searchPrinter()
 		printer?.let {
 			saveSelectedPrinter(it)
 			return print(printerName = it.friendlyName, printerAddress = it.address, printAction = printAction)
@@ -107,22 +100,40 @@ class ZebraPrint {
 	suspend fun searchPrinterAndSave(): Result<Boolean> {
 		checkPermissions()
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
-		var printer: Printer? = null
-		try {
-			discoverPrinters().collect { printerList ->
-				Timber.d("New printer list received: ${printerList.joinToString(", ") { it.address }}")
-				withContext(Dispatchers.Main) {
-					printer = showPrinterListDialog(printerList)
-				}
-			}
-		} catch (e: Exception) {
-			sharedDialog?.dismiss()
-			throw e
-		}
+		val printer: Printer? = searchPrinter()
+
 		printer?.let {
 			saveSelectedPrinter(it)
 			return Result.success(true)
 		} ?: throw PrinterDiscoveryCancelledException()
+	}
+
+	private suspend fun searchPrinter(): Printer? {
+		var printer: Printer? = null
+		try {
+			discoverPrinters().onEach { printerList ->
+				Timber.d("ON EACH: New printer list received: ${printerList.joinToString(", ") { it.address }}")
+				updatePrinterListDialog(printerList)
+			}
+				.buffer(
+					capacity = 0,
+					onBufferOverflow = BufferOverflow.DROP_OLDEST
+				).collect { printerList ->
+					Timber.d("COLLECT: New printer list received: ${printerList.joinToString(", ") { it.address }}")
+					if (printer == null) {
+						Timber.d("COLLECT: Showing printer list dialog")
+						withContext(Dispatchers.Main) {
+							printer = showPrinterListDialog(printerList)
+						}
+					} else {
+						Timber.d("COLLECT: skipping printer list dialog")
+					}
+				}
+		} catch (e: Exception) {
+			sharedDialog?.dismiss()
+			throw e
+		}
+		return printer
 	}
 
 
@@ -132,28 +143,45 @@ class ZebraPrint {
 
 	private var sharedDialog: AlertDialog? = null
 	private suspend fun showPrinterListDialog(printerList: List<Printer>): Printer {
-		return suspendCoroutine<Printer> { continuation ->
-			Timber.d("Showing printer list dialog with ${printerList.size} printers")
-			sharedDialog?.dismiss()
-
-			val builder = MaterialAlertDialogBuilder(requireActivity())
-				.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
-				.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
-
-			builder.setIcon(R.drawable.ic_printer)
-			builder.setTitle(R.string.select_printer)
-
-			val discoveredPrinterAdapter = DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
-				continuation.resume(printer)
+		return suspendCancellableCoroutine<Printer> { continuation ->
+			if (updatePrinterListDialog(printerList).not()) {
+				Timber.d("Showing printer list dialog with ${printerList.size} printers")
 				sharedDialog?.dismiss()
+
+				val builder = MaterialAlertDialogBuilder(requireActivity())
+					.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+					.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+
+				builder.setIcon(R.drawable.ic_printer)
+				builder.setTitle(R.string.select_printer)
+
+				val discoveredPrinterAdapter = DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
+					continuation.resume(printer)
+					sharedDialog?.dismiss()
+				}
+				builder.setAdapter(discoveredPrinterAdapter) { dialog, _ ->
+					dialog.dismiss()
+				}
+				builder.setCancelable(true)
+				builder.setOnCancelListener { continuation.resumeWithException(PrinterDiscoveryCancelledException()) }
+				continuation.invokeOnCancellation { sharedDialog?.dismiss() }
+				sharedDialog = builder.show()
 			}
-			builder.setAdapter(discoveredPrinterAdapter) { dialog, _ ->
-				dialog.dismiss()
-			}
-			builder.setCancelable(true)
-			builder.setOnCancelListener { continuation.resumeWithException(PrinterDiscoveryCancelledException()) }
-			sharedDialog = builder.show()
 		}
+	}
+
+	private fun updatePrinterListDialog(printerList: List<Printer>): Boolean {
+		if (sharedDialog == null || sharedDialog?.isShowing == false) return false
+		val adapter = sharedDialog?.listView?.adapter
+		return if (adapter != null && adapter is DiscoveredPrinterAdapter) {
+
+			Timber.d("Updating printer list dialog with ${printerList.size} printers")
+			adapter.setNotifyOnChange(false)
+			adapter.clear()
+			adapter.addAll(printerList)
+			adapter.notifyDataSetChanged()
+			true
+		} else false
 	}
 
 	private fun showPrinterDiscoveryDialog() {

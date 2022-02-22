@@ -111,6 +111,7 @@ class CustomBluetoothDiscoverer private constructor(private val context: Context
 		private fun isPrinterGenericClass(bluetoothDevice: BluetoothDevice): Boolean {
 			return if (bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED) {
 				val uuids = bluetoothDevice.uuids
+
 				if (uuids == null || uuids.isEmpty()) {
 					bluetoothDevice.fetchUuidsWithSdp()
 					false
