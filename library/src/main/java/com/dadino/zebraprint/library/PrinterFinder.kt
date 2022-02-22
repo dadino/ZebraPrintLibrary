@@ -1,7 +1,6 @@
 package com.dadino.zebraprint.library
 
 import android.content.Context
-import com.zebra.sdk.printer.discovery.BluetoothDiscoverer
 import com.zebra.sdk.printer.discovery.DeviceFilter
 import com.zebra.sdk.printer.discovery.DiscoveredPrinter
 import com.zebra.sdk.printer.discovery.DiscoveryHandler
@@ -52,8 +51,8 @@ class PrinterFinder(private val context: Context) {
 					cancel(error, RuntimeException(error))
 				}
 			}
-			if (filter != null) BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter)
-			else BluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler)
+			if (filter != null) CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter)
+			else CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler)
 
 			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one
 			// NetworkDiscoverer.findPrinters(handler)

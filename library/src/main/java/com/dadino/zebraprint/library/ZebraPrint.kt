@@ -1,6 +1,7 @@
 package com.dadino.zebraprint.library
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AlertDialog
@@ -82,6 +83,7 @@ class ZebraPrint {
 		}
 	}
 
+	@SuppressLint("MissingPermission")
 	private suspend fun searchPrinterThenPrint(printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
 		var printer: Printer? = null
@@ -101,12 +103,14 @@ class ZebraPrint {
 		} ?: throw PrinterDiscoveryCancelledException()
 	}
 
+	@SuppressLint("MissingPermission")
 	suspend fun searchPrinterAndSave(): Result<Boolean> {
 		checkPermissions()
 		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
 		var printer: Printer? = null
 		try {
 			discoverPrinters().collect { printerList ->
+				Timber.d("New printer list received: ${printerList.joinToString(", ") { it.address }}")
 				withContext(Dispatchers.Main) {
 					printer = showPrinterListDialog(printerList)
 				}
@@ -139,10 +143,11 @@ class ZebraPrint {
 			builder.setIcon(R.drawable.ic_printer)
 			builder.setTitle(R.string.select_printer)
 
-			builder.setAdapter(DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
+			val discoveredPrinterAdapter = DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
 				continuation.resume(printer)
 				sharedDialog?.dismiss()
-			}) { dialog, _ ->
+			}
+			builder.setAdapter(discoveredPrinterAdapter) { dialog, _ ->
 				dialog.dismiss()
 			}
 			builder.setCancelable(true)
