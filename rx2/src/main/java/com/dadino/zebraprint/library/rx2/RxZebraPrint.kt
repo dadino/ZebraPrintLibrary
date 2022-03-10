@@ -1,7 +1,7 @@
 package com.dadino.zebraprint.library.rx2
 
 import androidx.appcompat.app.AppCompatActivity
-import com.dadino.zebraprint.library.Optional
+import com.dadino.quickstart3.base.Optional
 import com.dadino.zebraprint.library.PrintResponse
 import com.dadino.zebraprint.library.Printer
 import com.dadino.zebraprint.library.ZebraPrint
