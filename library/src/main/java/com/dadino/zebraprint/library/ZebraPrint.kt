@@ -22,17 +22,18 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = false) {
-	private var activity: AppCompatActivity? = null
+	private var activity: WeakReference<AppCompatActivity>? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
 	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(requireActivity()) }
 
 	fun setActivity(activity: AppCompatActivity) {
-		this.activity = activity
+		this.activity = WeakReference(activity)
 		activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
 			override fun onDestroy(owner: LifecycleOwner) {
 				runBlocking { closeConnections() }
@@ -42,46 +43,50 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 	}
 
 	private fun requireActivity(): AppCompatActivity {
-		return activity ?: throw RuntimeException("Activity not set in ZebraPrint. Remember to call zebraPrint.setActivity(activity) before using ZebraPrint APIs")
+		return activity?.get() ?: throw RuntimeException("Activity not set in ZebraPrint. Remember to call zebraPrint.setActivity(activity) before using ZebraPrint APIs")
 	}
 
-	suspend fun printZplWithSelectedPrinter(zpl: String): Result<PrintResponse> {
-		return printWithSelectedPrinter { connection -> ZplPrinter.printZPL(connection, zpl) }
+	suspend fun printZplWithSelectedPrinter(zpl: String, failOnErrors: Boolean = false): Result<PrintResponse> {
+		return printWithSelectedPrinter(failOnErrors) { connection -> ZplPrinter.printZPL(connection, zpl) }
 	}
 
-	suspend fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>): Result<PrintResponse> {
-		return printWithSelectedPrinter { connection -> ZplPrinter.printZPLTemplate(connection, templateName, data) }
+	suspend fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>, failOnErrors: Boolean = false): Result<PrintResponse> {
+		return printWithSelectedPrinter(failOnErrors) { connection -> ZplPrinter.printZPLTemplate(connection, templateName, data) }
 	}
 
-	suspend fun printByteArrayWithSelectedPrinter(byteArray: ByteArray): Result<PrintResponse> {
-		return printWithSelectedPrinter { connection -> ZplPrinter.printByteArray(connection, byteArray) }
+	suspend fun printByteArrayWithSelectedPrinter(byteArray: ByteArray, failOnErrors: Boolean = false): Result<PrintResponse> {
+		return printWithSelectedPrinter(failOnErrors) { connection -> ZplPrinter.printByteArray(connection, byteArray) }
 	}
 
-	private suspend fun printWithSelectedPrinter(printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
+	private suspend fun printWithSelectedPrinter(failOnErrors: Boolean = false, printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		return withContext(Dispatchers.IO) {
 			checkPermissions()
 			val printer = loadSelectedPrinter()
 
-			tryPrint(printerAddress = printer?.address, printerName = printer?.friendlyName, printAction = printAction)
+			tryPrint(printerAddress = printer?.address, printerName = printer?.friendlyName, failOnErrors = failOnErrors, printAction = printAction)
 		}
 	}
 
-	private suspend fun tryPrint(printerName: String?, printerAddress: String?, printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
+	private suspend fun tryPrint(printerName: String?, printerAddress: String?, failOnErrors: Boolean = false, printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		return withContext(Dispatchers.IO) {
 			if (printerAddress != null) {
 				try {
+					Timber.d("Fails on error: $failOnErrors")
 					val printResult = print(printerName = printerName, printerAddress = printerAddress, printAction = printAction)
 					if (printResult.isSuccess) printResult
 					else {
-						val exception = printResult.exceptionOrNull()
-						if (exception is PrinterNotReadyToPrintException) throw exception
+						val exception = printResult.exceptionOrNull() ?: PrintErrorException()
+						if (failOnErrors || exception is PrinterNotReadyToPrintException) throw exception
 						else searchPrinterThenPrint(printAction = printAction)
 					}
 				} catch (e: ConnectionException) {
-					searchPrinterThenPrint(printAction = printAction)
+					if (failOnErrors.not()) searchPrinterThenPrint(printAction = printAction)
+					else throw PrinterNotReachableException()
 				}
-			} else {
+			} else if (failOnErrors.not()) {
 				searchPrinterThenPrint(printAction = printAction)
+			} else {
+				throw PrinterNotSelectedException()
 			}
 		}
 	}

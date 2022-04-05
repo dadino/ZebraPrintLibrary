@@ -3,4 +3,12 @@
 	<string name="select_printer">Selezione stampante</string>
 	<string name="printer_discovery_in_progress">Ricerca stampanti in corso…</string>
 	<string name="print_in_progress">Stampa in corso…</string>
+
+	<string name="error_printer_generic">Errore di stampa</string>
+	<string name="error_printer_not_reachable">Stampante non raggiungibile</string>
+	<string name="error_printer_not_selected">Stampante non selezionata</string>
+	<string name="error_printer_discovery_cancelled">Ricerca stampante annullata</string>
+	<string name="error_no_printer_found">Nessuna stampante rilevata</string>
+	<string name="error_printer_not_ready_to_print">Stampante non pronta a stampare</string>
+	<string name="error_permissions_not_granted">Autorizzazioni richieste</string>
 </resources>
