@@ -21,8 +21,8 @@ ext {
     minSdk = 21
     targetSdk = 31
 
-    versionCode = 14
-    versionName = "0.3.6"
+    versionCode = 15
+    versionName = "0.4.0"
 
     groupId = "io.github.dadino.zebraprintlibrary"
     artifactIdLibrary = "library"
