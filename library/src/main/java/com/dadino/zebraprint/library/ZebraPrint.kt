@@ -28,22 +28,20 @@ import kotlin.coroutines.resumeWithException
 
 class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = false) {
 	private var activity: WeakReference<AppCompatActivity>? = null
-	private val printerFinder: PrinterFinder by lazy { PrinterFinder(requireActivity()) }
+	private val printerFinder: PrinterFinder by lazy { PrinterFinder(activity?.get() ?: throw ActivityNotSetException()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
-	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(requireActivity()) }
+	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(activity?.get() ?: throw ActivityNotSetException()) }
 
 	fun setActivity(activity: AppCompatActivity) {
 		this.activity = WeakReference(activity)
+		printerFinder.toString()
+		selectedPrinterRepo.toString()
 		activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
 			override fun onDestroy(owner: LifecycleOwner) {
 				runBlocking { closeConnections() }
 				super.onDestroy(owner)
 			}
 		})
-	}
-
-	private fun requireActivity(): AppCompatActivity {
-		return activity?.get() ?: throw RuntimeException("Activity not set in ZebraPrint. Remember to call zebraPrint.setActivity(activity) before using ZebraPrint APIs")
 	}
 
 	suspend fun printZplWithSelectedPrinter(zpl: String, failOnErrors: Boolean = false): Result<PrintResponse> {
@@ -60,7 +58,7 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 
 	private suspend fun printWithSelectedPrinter(failOnErrors: Boolean = false, printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
 		return withContext(Dispatchers.IO) {
-			checkPermissions()
+			activity?.get()?.let { checkPermissions(it) } ?: throw ActivityNotSetException()
 			val printer = loadSelectedPrinter()
 
 			tryPrint(printerAddress = printer?.address, printerName = printer?.friendlyName, failOnErrors = failOnErrors, printAction = printAction)
@@ -93,7 +91,7 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 
 	@SuppressLint("MissingPermission")
 	private suspend fun searchPrinterThenPrint(printAction: suspend (Connection) -> Unit): Result<PrintResponse> {
-		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
+		withContext(Dispatchers.Main) { activity?.get()?.let { showPrinterDiscoveryDialog(it) } ?: throw ActivityNotSetException() }
 		val printer: Printer? = searchPrinter()
 		printer?.let {
 			saveSelectedPrinter(it)
@@ -103,8 +101,11 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 
 	@SuppressLint("MissingPermission")
 	suspend fun searchPrinterAndSave(): Result<Boolean> {
-		checkPermissions()
-		withContext(Dispatchers.Main) { showPrinterDiscoveryDialog() }
+		activity?.get()?.let {
+			checkPermissions(it)
+			withContext(Dispatchers.Main) { showPrinterDiscoveryDialog(it) }
+		} ?: throw ActivityNotSetException()
+
 		val printer: Printer? = searchPrinter()
 
 		printer?.let {
@@ -128,7 +129,7 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 					if (printer == null) {
 						Timber.d("COLLECT: Showing printer list dialog")
 						withContext(Dispatchers.Main) {
-							printer = showPrinterListDialog(printerList)
+							printer = activity?.get()?.let { showPrinterListDialog(it, printerList) } ?: throw ActivityNotSetException()
 						}
 					} else {
 						Timber.d("COLLECT: skipping printer list dialog")
@@ -147,20 +148,20 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 	}
 
 	private var sharedDialog: AlertDialog? = null
-	private suspend fun showPrinterListDialog(printerList: List<Printer>): Printer {
+	private suspend fun showPrinterListDialog(activity: AppCompatActivity, printerList: List<Printer>): Printer {
 		return suspendCancellableCoroutine<Printer> { continuation ->
 			if (updatePrinterListDialog(printerList).not()) {
 				Timber.d("Showing printer list dialog with ${printerList.size} printers")
 				sharedDialog?.dismiss()
 
-				val builder = MaterialAlertDialogBuilder(requireActivity())
-					.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
-					.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+				val builder = MaterialAlertDialogBuilder(activity)
+					.setBackgroundInsetTop(activity.resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+					.setBackgroundInsetBottom(activity.resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
 
 				builder.setIcon(R.drawable.ic_printer)
 				builder.setTitle(R.string.select_printer)
 
-				val discoveredPrinterAdapter = DiscoveredPrinterAdapter(requireActivity(), printerList) { printer ->
+				val discoveredPrinterAdapter = DiscoveredPrinterAdapter(activity, printerList) { printer ->
 					continuation.resume(printer)
 					sharedDialog?.dismiss()
 				}
@@ -189,19 +190,19 @@ class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = fals
 		} else false
 	}
 
-	private fun showPrinterDiscoveryDialog() {
+	private fun showPrinterDiscoveryDialog(activity: AppCompatActivity) {
 		sharedDialog?.dismiss()
-		val builder = MaterialAlertDialogBuilder(requireActivity())
-			.setBackgroundInsetTop(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
-			.setBackgroundInsetBottom(requireActivity().resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+		val builder = MaterialAlertDialogBuilder(activity)
+			.setBackgroundInsetTop(activity.resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
+			.setBackgroundInsetBottom(activity.resources.getDimensionPixelSize(R.dimen.dialog_vertical_margin))
 		builder.setView(R.layout.dialog_printer_discovery)
 		sharedDialog = builder.show()
 	}
 
-	private fun checkPermissions(): Boolean {
+	private fun checkPermissions(activity: AppCompatActivity): Boolean {
 		val notGrantedPermissions = arrayListOf<String>()
 		getPermissionRequired().forEach { permission ->
-			if (ContextCompat.checkSelfPermission(requireActivity(), permission) != PackageManager.PERMISSION_GRANTED) {
+			if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
 				notGrantedPermissions.add(permission)
 			}
 		}

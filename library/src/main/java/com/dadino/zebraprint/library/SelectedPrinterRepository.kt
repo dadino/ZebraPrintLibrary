@@ -50,9 +50,10 @@ class PrefSelectedPrinterRepository(context: Context) : ISelectedPrinterReposito
 	}
 }
 
-class DataStoreSelectedPrinterRepository(private val context: Context) : ISelectedPrinterRepository {
+class DataStoreSelectedPrinterRepository(context: Context) : ISelectedPrinterRepository {
+	private val appContext: Context = context.applicationContext
 	override suspend fun savePrinter(printer: Printer) {
-		context.printerDataStore.updateData { currentPrinter ->
+		appContext.printerDataStore.updateData { currentPrinter ->
 			currentPrinter.toBuilder()
 				.setAddress(printer.address)
 				.setFriendlyName(printer.friendlyName)
@@ -63,13 +64,13 @@ class DataStoreSelectedPrinterRepository(private val context: Context) : ISelect
 
 	override suspend fun loadPrinter(): Printer? {
 		return withContext(Dispatchers.IO) {
-			val protoPrinter = context.printerDataStore.data.first()
+			val protoPrinter = appContext.printerDataStore.data.first()
 			getPrinterFromProto(protoPrinter)
 		}
 	}
 
 	override suspend fun getPrinter(): Flow<Printer?> {
-		return context.printerDataStore.data
+		return appContext.printerDataStore.data
 			.map {
 				getPrinterFromProto(it)
 			}
