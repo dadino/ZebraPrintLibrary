@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import timber.log.Timber
 
-class PrinterFinder(private val context: Context) {
+class PrinterFinder(context: Context) {
+	private val appContext: Context = context.applicationContext
 
 	suspend fun discoverPrinters(filter: DeviceFilter?, useStrictFilteringForGenericDevices: Boolean): Flow<List<Printer>> {
 		return callbackFlow {
@@ -51,7 +52,7 @@ class PrinterFinder(private val context: Context) {
 					cancel(error, RuntimeException(error))
 				}
 			}
-			CustomBluetoothDiscoverer.findPrinters(context, bluetoothDiscoveryHandler, filter, useStrictFilteringForGenericDevices)
+			CustomBluetoothDiscoverer.findPrinters(appContext, bluetoothDiscoveryHandler, filter, useStrictFilteringForGenericDevices)
 
 
 			//TODO this might work for network discovery too, but we'd need to concatenate it with the Bluetooth one

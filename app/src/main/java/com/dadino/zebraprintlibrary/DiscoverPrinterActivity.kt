@@ -8,8 +8,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dadino.zebraprint.library.PermissionsRequiredException
+import com.dadino.zebraprint.library.PrintLibraryException
 import com.dadino.zebraprint.library.ZebraPrint
 import com.dadino.zebraprint.library.rx2.RxZebraPrint
+import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.snackbar.Snackbar
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -20,6 +22,7 @@ import timber.log.Timber
 class DiscoverPrinterActivity : AppCompatActivity() {
 	private val root: View by lazy { findViewById<View>(R.id.root) }
 	private val progressBar: View by lazy { findViewById<View>(R.id.progressBar) }
+	private val failOnErrorsCheckbox: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.fail_on_errors) }
 	private val coroutinesPrintZpl: View by lazy { findViewById<View>(R.id.coroutines_print_zpl) }
 	private val coroutinesSearch: View by lazy { findViewById<View>(R.id.coroutines_search) }
 	private val coroutinesSelectedPrinter: TextView by lazy { findViewById<TextView>(R.id.coroutines_selected_printer) }
@@ -86,7 +89,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 				Timber.d("Print flow started")
 				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.VISIBLE
-				val printResult = zebraPrinter.printZplWithSelectedPrinter(generateLabel())
+				val printResult = zebraPrinter.printZplWithSelectedPrinter(generateLabel(), failOnErrors = failOnErrorsCheckbox.isChecked)
 				Timber.d("Print flow completed")
 				val printResponse = printResult.getOrThrow()
 				Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
@@ -120,17 +123,18 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private var printDisposable: Disposable? = null
 	private fun printWithRx() {
 		printDisposable?.dispose()
-		printDisposable = zebraPrinterRx.printZplWithSelectedPrinter(generateLabel())
+		printDisposable = zebraPrinterRx.printZplWithSelectedPrinter(generateLabel(), failOnErrors = failOnErrorsCheckbox.isChecked)
 			.doOnSubscribe {
 				Timber.d("Print flow started")
 				Snackbar.make(root, "Print started", Snackbar.LENGTH_SHORT).show()
 				progressBar.visibility = View.VISIBLE
 			}
-			.subscribeBy(onSuccess = { printResponse ->
-				Timber.d("Print flow completed")
-				Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
-				progressBar.visibility = View.INVISIBLE
-			},
+			.subscribeBy(
+				onSuccess = { printResponse ->
+					Timber.d("Print flow completed")
+					Snackbar.make(root, "Print completed on ${printResponse.printerName} (${printResponse.printerAddress})", Snackbar.LENGTH_SHORT).show()
+					progressBar.visibility = View.INVISIBLE
+				},
 				onError = {
 					onError(it, "print")
 				})
@@ -159,6 +163,11 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 		when (e) {
 			is PermissionsRequiredException -> {
 				requestPermissionsForPrinter(e.permissionList)
+			}
+			is PrintLibraryException        -> {
+				Timber.e(e)
+				Timber.d("$functionName flow error")
+				Snackbar.make(root, e.contextFormattable.format(this) ?: "$functionName error", Snackbar.LENGTH_SHORT).show()
 			}
 			else                            -> {
 				Timber.e(e)

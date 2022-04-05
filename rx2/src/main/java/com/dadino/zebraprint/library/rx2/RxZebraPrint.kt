@@ -1,7 +1,7 @@
 package com.dadino.zebraprint.library.rx2
 
 import androidx.appcompat.app.AppCompatActivity
-import com.dadino.zebraprint.library.Optional
+import com.dadino.quickstart3.base.Optional
 import com.dadino.zebraprint.library.PrintResponse
 import com.dadino.zebraprint.library.Printer
 import com.dadino.zebraprint.library.ZebraPrint
@@ -21,21 +21,21 @@ class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCorouti
 		zebraPrint.setActivity(activity)
 	}
 
-	fun printZplWithSelectedPrinter(zpl: String): Single<PrintResponse> {
+	fun printZplWithSelectedPrinter(zpl: String, failOnErrors: Boolean = false): Single<PrintResponse> {
 		return rxSingle(coroutineContext) {
-			zebraPrint.printZplWithSelectedPrinter(zpl = zpl).getOrThrow()
+			zebraPrint.printZplWithSelectedPrinter(zpl = zpl, failOnErrors = failOnErrors).getOrThrow()
 		}
 	}
 
-	fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>): Single<PrintResponse> {
+	fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>, failOnErrors: Boolean = false): Single<PrintResponse> {
 		return rxSingle(coroutineContext) {
-			zebraPrint.printTemplateWithSelectedPrinter(templateName = templateName, data = data).getOrThrow()
+			zebraPrint.printTemplateWithSelectedPrinter(templateName = templateName, data = data, failOnErrors = failOnErrors).getOrThrow()
 		}
 	}
 
-	fun printByteArrayWithSelectedPrinter(byteArray: ByteArray): Single<PrintResponse> {
+	fun printByteArrayWithSelectedPrinter(byteArray: ByteArray, failOnErrors: Boolean = false): Single<PrintResponse> {
 		return rxSingle(coroutineContext) {
-			zebraPrint.printByteArrayWithSelectedPrinter(byteArray = byteArray).getOrThrow()
+			zebraPrint.printByteArrayWithSelectedPrinter(byteArray = byteArray, failOnErrors = failOnErrors).getOrThrow()
 		}
 	}
 
