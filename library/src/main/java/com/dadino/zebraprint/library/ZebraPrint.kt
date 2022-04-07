@@ -26,7 +26,7 @@ import java.lang.ref.WeakReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class ZebraPrint(private val useStrictFilteringForGenericDevices: Boolean = false) {
+class ZebraPrint(var useStrictFilteringForGenericDevices: Boolean = false) {
 	private var activity: WeakReference<AppCompatActivity>? = null
 	private val printerFinder: PrinterFinder by lazy { PrinterFinder(activity?.get() ?: throw ActivityNotSetException()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }

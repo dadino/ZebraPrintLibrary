@@ -23,6 +23,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val root: View by lazy { findViewById<View>(R.id.root) }
 	private val progressBar: View by lazy { findViewById<View>(R.id.progressBar) }
 	private val failOnErrorsCheckbox: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.fail_on_errors) }
+	private val useStrictDiscoverCheckbox: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.use_strict_discover) }
 	private val coroutinesPrintZpl: View by lazy { findViewById<View>(R.id.coroutines_print_zpl) }
 	private val coroutinesSearch: View by lazy { findViewById<View>(R.id.coroutines_search) }
 	private val coroutinesSelectedPrinter: TextView by lazy { findViewById<TextView>(R.id.coroutines_selected_printer) }
@@ -54,6 +55,11 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 
 		rx2PrintZpl.setOnClickListener { printWithRx() }
 		rx2Search.setOnClickListener { searchWithRx() }
+
+		useStrictDiscoverCheckbox.setOnCheckedChangeListener { buttonView, isChecked ->
+			zebraPrinter.useStrictFilteringForGenericDevices = isChecked
+			zebraPrinterRx.setUseStrictFilteringForGenericDevices(isChecked)
+		}
 
 		collectSelectedPrinter()
 		subscribeToSelectedPrinter()
