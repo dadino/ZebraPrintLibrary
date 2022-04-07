@@ -24,6 +24,12 @@
 			android:layout_height="wrap_content"
 			android:text="Fail on errors" />
 
+		<com.google.android.material.checkbox.MaterialCheckBox
+			android:id="@+id/use_strict_discover"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:text="Use strict filters on discovery" />
+
 		<TextView
 			android:id="@+id/textView2"
 			style="@style/TextAppearance.MaterialComponents.Overline"
