@@ -56,7 +56,7 @@ class DataStoreSelectedPrinterRepository(context: Context) : ISelectedPrinterRep
 		appContext.printerDataStore.updateData { currentPrinter ->
 			currentPrinter.toBuilder()
 				.setAddress(printer.address)
-				.setFriendlyName(printer.friendlyName)
+				.setFriendlyName(printer.friendlyName?.let { it } ?: "")
 				.setTypeId(printer.typeId)
 				.build()
 		}

@@ -26,9 +26,9 @@ import java.lang.ref.WeakReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class ZebraPrint(var useStrictFilteringForGenericDevices: Boolean = false) {
+class ZebraPrint(var useStrictFilteringForGenericDevices: Boolean = false, var searchOnNetwork: Boolean = false, var searchOnBluetooth: Boolean = false) {
 	private var activity: WeakReference<AppCompatActivity>? = null
-	private val printerFinder: PrinterFinder by lazy { PrinterFinder(activity?.get() ?: throw ActivityNotSetException()) }
+	private val printerFinder: CombinedPrinterFinder by lazy { CombinedPrinterFinder(activity?.get() ?: throw ActivityNotSetException()) }
 	private val connectionHandler: ConnectionHandler by lazy { ConnectionHandler() }
 	private val selectedPrinterRepo: ISelectedPrinterRepository by lazy { DataStoreSelectedPrinterRepository(activity?.get() ?: throw ActivityNotSetException()) }
 
@@ -227,7 +227,7 @@ class ZebraPrint(var useStrictFilteringForGenericDevices: Boolean = false) {
 
 	private suspend fun discoverPrinters(filter: DeviceFilter? = null): Flow<List<Printer>> {
 		return withContext(Dispatchers.IO) {
-			printerFinder.discoverPrinters(filter, useStrictFilteringForGenericDevices)
+			printerFinder.discoverPrinters(filter, useStrictFilteringForGenericDevices, searchOnNetwork, searchOnBluetooth)
 		}
 	}
 
