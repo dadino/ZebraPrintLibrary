@@ -57,6 +57,7 @@ android {
             excludes += ['META-INF/*', 'META-INF/**/*']
         }
     }
+    namespace 'com.dadino.zebraprint.library.rx2'
 
 }
 

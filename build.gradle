@@ -1,12 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.6.21'
     ext.coroutines_version = '1.6.0'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
+        classpath 'com.android.tools.build:gradle:7.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
@@ -22,7 +22,7 @@ ext {
     targetSdk = 31
 
     versionCode = 16
-    versionName = "0.4.1"
+    versionName = "0.5.0"
 
     groupId = "io.github.dadino.zebraprintlibrary"
     artifactIdLibrary = "library"

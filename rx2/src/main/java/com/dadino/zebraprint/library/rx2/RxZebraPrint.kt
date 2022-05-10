@@ -27,6 +27,22 @@ class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCorouti
 		zebraPrint.useStrictFilteringForGenericDevices = useStrictFilteringForGenericDevices
 	}
 
+	fun getSearchOnBluetooth(): Boolean {
+		return zebraPrint.searchOnBluetooth
+	}
+
+	fun setSearchOnBluetooth(searchOnBluetooth: Boolean) {
+		zebraPrint.searchOnBluetooth = searchOnBluetooth
+	}
+
+	fun getSearchOnNetwork(): Boolean {
+		return zebraPrint.searchOnNetwork
+	}
+
+	fun setSearchOnNetwork(searchOnNetwork: Boolean) {
+		zebraPrint.searchOnNetwork = searchOnNetwork
+	}
+
 	fun setActivity(activity: AppCompatActivity) {
 		zebraPrint.setActivity(activity)
 	}

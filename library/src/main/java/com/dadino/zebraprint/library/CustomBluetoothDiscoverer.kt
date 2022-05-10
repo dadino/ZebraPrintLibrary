@@ -110,7 +110,7 @@ class CustomBluetoothDiscoverer private constructor(
 
 		private fun isPrinterClass(bluetoothDevice: BluetoothDevice): Boolean {
 			return bluetoothDevice.bluetoothClass != null
-					&& (bluetoothDevice.bluetoothClass.deviceClass == 1664 || isPrinterGenericClass(bluetoothDevice))
+					&& (bluetoothDevice.bluetoothClass.deviceClass == EXPECTED_DEVICE_CLASS || isPrinterGenericClass(bluetoothDevice))
 		}
 
 		private fun isPrinterGenericClass(bluetoothDevice: BluetoothDevice): Boolean {
@@ -123,7 +123,7 @@ class CustomBluetoothDiscoverer private constructor(
 						false
 					} else {
 						Timber.d("Generic bluetooth device ${bluetoothDevice.name} (${bluetoothDevice.address}) has the following services: ${uuids.joinToString(", ") { it.uuid.toString() }}")
-						uuids.any { "00001101-0000-1000-8000-00805F9B34FB".equals(it.uuid.toString(), ignoreCase = true) }
+						uuids.any { EXPECTED_SERVICE_UUID.equals(it.uuid.toString(), ignoreCase = true) }
 					}
 				} else false
 			} else bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED
@@ -131,6 +131,9 @@ class CustomBluetoothDiscoverer private constructor(
 	}
 
 	companion object {
+		private const val EXPECTED_DEVICE_CLASS = 1664
+		private const val EXPECTED_SERVICE_UUID = "00001101-0000-1000-8000-00805F9B34FB"
+
 		@SuppressLint("MissingPermission")
 		@Throws(ConnectionException::class)
 		fun findPrinters(context: Context, discoveryHandler: DiscoveryHandler, deviceFilter: DeviceFilter?, useStrictFilteringForGenericDevices: Boolean) {
