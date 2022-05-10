@@ -76,6 +76,7 @@ android {
             }
         }
     }
+    namespace 'com.dadino.zebraprint.library'
 }
 
 dependencies {

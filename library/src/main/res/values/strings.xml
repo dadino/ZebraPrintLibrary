@@ -11,4 +11,5 @@
 	<string name="error_no_printer_found">Nessuna stampante rilevata</string>
 	<string name="error_printer_not_ready_to_print">Stampante non pronta a stampare</string>
 	<string name="error_permissions_not_granted">Autorizzazioni richieste</string>
+	<string name="no_name_printer">Dispositivo senza nome</string>
 </resources>
