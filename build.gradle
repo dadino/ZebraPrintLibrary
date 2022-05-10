@@ -1,5 +1,5 @@
 buildscript {
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.6.21'
     ext.coroutines_version = '1.6.0'
     repositories {
         google()
@@ -22,7 +22,7 @@ ext {
     targetSdk = 31
 
     versionCode = 16
-    versionName = "0.4.1"
+    versionName = "0.5.0"
 
     groupId = "io.github.dadino.zebraprintlibrary"
     artifactIdLibrary = "library"
