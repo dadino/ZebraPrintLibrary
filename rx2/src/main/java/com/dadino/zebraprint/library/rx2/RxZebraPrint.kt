@@ -35,6 +35,14 @@ class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCorouti
 		zebraPrint.searchOnBluetooth = searchOnBluetooth
 	}
 
+	fun getSearchOnBle(): Boolean {
+		return zebraPrint.searchOnBle
+	}
+
+	fun setSearchOnBle(searchOnBle: Boolean) {
+		zebraPrint.searchOnBle = searchOnBle
+	}
+
 	fun getSearchOnNetwork(): Boolean {
 		return zebraPrint.searchOnNetwork
 	}

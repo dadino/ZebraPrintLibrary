@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string name="select_printer">Selezione stampante</string>
+	<string name="select_printer_with_message">Selezione stampante\n%s</string>
 	<string name="printer_discovery_in_progress">Ricerca stampanti in corso…</string>
 	<string name="print_in_progress">Stampa in corso…</string>
 
@@ -12,4 +13,10 @@
 	<string name="error_printer_not_ready_to_print">Stampante non pronta a stampare</string>
 	<string name="error_permissions_not_granted">Autorizzazioni richieste</string>
 	<string name="no_name_printer">Dispositivo senza nome</string>
+
+	<string name="printer_discovery_dialog_message_in_progress">Ricerca in corso…</string>
+	<string name="printer_discovery_dialog_message_bluetooth_in_progress">Ricerca bluetooth in corso…</string>
+	<string name="printer_discovery_dialog_message_ble_in_progress">Ricerca BLE in corso…</string>
+	<string name="printer_discovery_dialog_message_network_in_progress">Ricerca network in corso…</string>
+	<string name="printer_discovery_dialog_message_done">Ricerca completata</string>
 </resources>

@@ -29,6 +29,7 @@ data class Printer(
 
 sealed class PrinterType(val id: String, @DrawableRes val icon: Int) {
 	object Bluetooth : PrinterType("bluetooth", R.drawable.ic_printer_type_bluetooth)
+	object BLE : PrinterType("ble", R.drawable.ic_printer_type_ble)
 	object Network : PrinterType("network", R.drawable.ic_printer_type_network)
 
 	companion object {
@@ -36,6 +37,7 @@ sealed class PrinterType(val id: String, @DrawableRes val icon: Int) {
 			return when (id) {
 				Bluetooth.id -> Bluetooth
 				Network.id   -> Network
+				BLE.id       -> BLE
 				else         -> Bluetooth
 			}
 		}
