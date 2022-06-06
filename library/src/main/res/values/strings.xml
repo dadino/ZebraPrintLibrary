@@ -15,6 +15,7 @@
 	<string name="no_name_printer">Dispositivo senza nome</string>
 
 	<string name="printer_discovery_dialog_message_in_progress">Ricerca in corso…</string>
+	<string name="printer_discovery_dialog_message_paired_in_progress">Ricerca dispotivi associati in corso…</string>
 	<string name="printer_discovery_dialog_message_bluetooth_in_progress">Ricerca bluetooth in corso…</string>
 	<string name="printer_discovery_dialog_message_ble_in_progress">Ricerca BLE in corso…</string>
 	<string name="printer_discovery_dialog_message_network_in_progress">Ricerca network in corso…</string>

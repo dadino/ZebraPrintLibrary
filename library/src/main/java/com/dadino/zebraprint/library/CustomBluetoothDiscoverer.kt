@@ -100,34 +100,13 @@ class CustomBluetoothDiscoverer private constructor(
 		private fun addDeviceIfWanted(bluetoothDevice: BluetoothDevice) {
 			Timber.d("Checking device: ${bluetoothDevice.name} ${bluetoothDevice.address} -> Device class: ${bluetoothDevice.bluetoothClass.deviceClass}")
 
-			if ((deviceFilter == null || deviceFilter.shouldAddPrinter(bluetoothDevice))
-				&& isPrinterClass(bluetoothDevice)
-			) {
+			if ((deviceFilter == null || deviceFilter.shouldAddPrinter(bluetoothDevice)) && isPrinterClass(bluetoothDevice, useStrictFilteringForGenericDevices)) {
 				discoveryHandler.foundPrinter(DiscoveredPrinterBluetooth(bluetoothDevice.address, bluetoothDevice.name))
 				foundDevices[bluetoothDevice.address] = bluetoothDevice
 			}
 		}
 
-		private fun isPrinterClass(bluetoothDevice: BluetoothDevice): Boolean {
-			return bluetoothDevice.bluetoothClass != null
-					&& (bluetoothDevice.bluetoothClass.deviceClass == EXPECTED_DEVICE_CLASS || isPrinterGenericClass(bluetoothDevice))
-		}
 
-		private fun isPrinterGenericClass(bluetoothDevice: BluetoothDevice): Boolean {
-			return if (useStrictFilteringForGenericDevices) {
-				if (bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED) {
-					val uuids = bluetoothDevice.uuids
-
-					if (uuids == null || uuids.isEmpty()) {
-						bluetoothDevice.fetchUuidsWithSdp()
-						false
-					} else {
-						Timber.d("Generic bluetooth device ${bluetoothDevice.name} (${bluetoothDevice.address}) has the following services: ${uuids.joinToString(", ") { it.uuid.toString() }}")
-						uuids.any { EXPECTED_SERVICE_UUID.equals(it.uuid.toString(), ignoreCase = true) }
-					}
-				} else false
-			} else bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED
-		}
 	}
 
 	companion object {
@@ -153,6 +132,29 @@ class CustomBluetoothDiscoverer private constructor(
 		fun findServices(context: Context, address: String?, discoveryHandler: ServiceDiscoveryHandler) {
 			val serviceDiscoverer = BtServiceDiscoverer(BluetoothHelper.formatMacAddress(address), discoveryHandler)
 			serviceDiscoverer.doDiscovery(context)
+		}
+
+		@SuppressLint("MissingPermission")
+		fun isPrinterClass(bluetoothDevice: BluetoothDevice, useStrictFilteringForGenericDevices: Boolean): Boolean {
+			return bluetoothDevice.bluetoothClass != null
+					&& (bluetoothDevice.bluetoothClass.deviceClass == EXPECTED_DEVICE_CLASS || isPrinterGenericClass(bluetoothDevice, useStrictFilteringForGenericDevices))
+		}
+
+		@SuppressLint("MissingPermission")
+		private fun isPrinterGenericClass(bluetoothDevice: BluetoothDevice, useStrictFilteringForGenericDevices: Boolean): Boolean {
+			return if (useStrictFilteringForGenericDevices) {
+				if (bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED) {
+					val uuids = bluetoothDevice.uuids
+
+					if (uuids == null || uuids.isEmpty()) {
+						bluetoothDevice.fetchUuidsWithSdp()
+						false
+					} else {
+						Timber.d("Generic bluetooth device ${bluetoothDevice.name} (${bluetoothDevice.address}) has the following services: ${uuids.joinToString(", ") { it.uuid.toString() }}")
+						uuids.any { EXPECTED_SERVICE_UUID.equals(it.uuid.toString(), ignoreCase = true) }
+					}
+				} else false
+			} else bluetoothDevice.bluetoothClass.deviceClass == BluetoothClass.Device.Major.UNCATEGORIZED
 		}
 	}
 }

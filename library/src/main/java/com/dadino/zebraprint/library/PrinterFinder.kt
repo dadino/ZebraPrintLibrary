@@ -12,6 +12,7 @@ interface IPrinterFinder {
 }
 
 class CombinedPrinterFinder(context: Context) {
+	private val bluetoothBondedPrinterFinder = BluetoothBondedPrinterFinder(context)
 	private val bluetoothPrinterFinder = BluetoothPrinterFinder(context)
 	private val blePrinterFinder = BlePrinterFinder(context)
 	private val networkPrinterFinder = NetworkPrinterFinder(context)
@@ -45,6 +46,13 @@ class CombinedPrinterFinder(context: Context) {
 			val printerList = arrayListOf<Printer>()
 			send(PrinterDiscoveryProgress(printerList = printerList, message = R.string.printer_discovery_dialog_message_in_progress.asFormattable()))
 
+			if (searchOnBle || searchOnBluetooth) {
+				send(PrinterDiscoveryProgress(printerList = printerList, message = R.string.printer_discovery_dialog_message_paired_in_progress.asFormattable()))
+				bluetoothBondedPrinterFinder.discoverPrinters(filter, useStrictFilteringForGenericDevices).collect {
+					printerList.updateWith(it)
+					send(PrinterDiscoveryProgress(printerList = printerList, message = R.string.printer_discovery_dialog_message_paired_in_progress.asFormattable()))
+				}
+			}
 			if (searchOnBluetooth) {
 				send(PrinterDiscoveryProgress(printerList = printerList, message = R.string.printer_discovery_dialog_message_bluetooth_in_progress.asFormattable()))
 				bluetoothPrinterFinder.discoverPrinters(filter, useStrictFilteringForGenericDevices).collect {

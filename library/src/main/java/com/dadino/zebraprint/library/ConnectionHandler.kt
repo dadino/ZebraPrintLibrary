@@ -1,7 +1,7 @@
 package com.dadino.zebraprint.library
 
 import android.content.Context
-import com.zebra.sdk.btleComm.BluetoothLeConnection
+import com.dadino.zebraprint.library.ble.BluetoothLeConnection
 import com.zebra.sdk.comm.BluetoothConnectionInsecure
 import com.zebra.sdk.comm.Connection
 import com.zebra.sdk.comm.TcpConnection
