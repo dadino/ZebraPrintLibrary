@@ -38,6 +38,13 @@
 			android:text="Search on bluetooth" />
 
 		<com.google.android.material.checkbox.MaterialCheckBox
+			android:id="@+id/search_on_ble"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:checked="true"
+			android:text="Search on BLE" />
+
+		<com.google.android.material.checkbox.MaterialCheckBox
 			android:id="@+id/search_on_network"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -45,7 +52,7 @@
 			android:text="Search on network" />
 
 		<TextView
-			android:id="@+id/textView2"
+			android:id="@+id/discovery_title"
 			style="@style/TextAppearance.MaterialComponents.Overline"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -73,7 +80,7 @@
 			tools:text="iMZ320 (21:12:21:ab:93)" />
 
 		<TextView
-			android:id="@+id/textView3"
+			android:id="@+id/discovery_message"
 			style="@style/TextAppearance.MaterialComponents.Overline"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"

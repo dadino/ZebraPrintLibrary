@@ -20,6 +20,8 @@ class DiscoveredPrinterAdapter(context: Context, data: List<Printer>, val callba
 		var printerTypeIcon: ImageView? = null
 	}
 
+	override fun hasStableIds(): Boolean = true
+
 	private var lastPosition = -1
 	override fun getView(position: Int, view: View?, parent: ViewGroup): View {
 		val returnView: View
@@ -47,5 +49,9 @@ class DiscoveredPrinterAdapter(context: Context, data: List<Printer>, val callba
 			viewHolder.root?.setOnClickListener { callback(printer) }
 		}
 		return returnView
+	}
+
+	override fun getItemId(position: Int): Long {
+		return getItem(position)?.let { "${it.address}-${it.typeId}" }?.hashCode()?.toLong() ?: 0
 	}
 }

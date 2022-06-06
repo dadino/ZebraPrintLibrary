@@ -25,6 +25,7 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 	private val failOnErrorsCheckbox: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.fail_on_errors) }
 	private val useStrictDiscoverCheckbox: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.use_strict_discover) }
 	private val searchOnBluetooth: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.search_on_bluetooth) }
+	private val searchOnBle: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.search_on_ble) }
 	private val searchOnNetwork: MaterialCheckBox by lazy { findViewById<MaterialCheckBox>(R.id.search_on_network) }
 	private val coroutinesPrintZpl: View by lazy { findViewById<View>(R.id.coroutines_print_zpl) }
 	private val coroutinesSearch: View by lazy { findViewById<View>(R.id.coroutines_search) }
@@ -72,6 +73,13 @@ class DiscoverPrinterActivity : AppCompatActivity() {
 		}
 		zebraPrinter.searchOnBluetooth = searchOnBluetooth.isChecked
 		zebraPrinterRx.setSearchOnBluetooth(searchOnBluetooth.isChecked)
+
+		searchOnBle.setOnCheckedChangeListener { buttonView, isChecked ->
+			zebraPrinter.searchOnBle = isChecked
+			zebraPrinterRx.setSearchOnBle(isChecked)
+		}
+		zebraPrinter.searchOnBle = searchOnBle.isChecked
+		zebraPrinterRx.setSearchOnBle(searchOnBle.isChecked)
 
 		searchOnNetwork.setOnCheckedChangeListener { buttonView, isChecked ->
 			zebraPrinter.searchOnNetwork = isChecked
