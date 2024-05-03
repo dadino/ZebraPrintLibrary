@@ -23,7 +23,7 @@ android {
 
     signingConfigs {
         releaseConfig {
-            storeFile file("zebra_print_library_sample_key.jks")
+            storeFile file("../app/zebra_print_library_sample_key.jks")
             storePassword("zebraprint")
             keyAlias "Dadino"
             keyPassword "zebraprint"
@@ -42,12 +42,16 @@ android {
             matchingFallbacks = ['debug']
         }
     }
+
+    kotlin {
+        jvmToolchain(17)
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "17"
     }
     packagingOptions {
         jniLibs {
@@ -69,7 +73,7 @@ dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-core:3.4.0')
 
     //AndroidX
-    implementation('androidx.appcompat:appcompat:1.4.1')
+    implementation('androidx.appcompat:appcompat:1.6.1')
 
     //Coroutines
     api("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:$coroutines_version")
@@ -80,5 +84,5 @@ dependencies {
     implementation('io.reactivex.rxjava2:rxandroid:2.1.1')
 
     //Quickstart
-    api("io.github.dadino.quickstart3:base:0.12.7")
+    api("io.github.dadino.quickstart3:base:0.13.4")
 }
