@@ -22,76 +22,72 @@ group = PUBLISH_GROUP_ID
 version = PUBLISH_VERSION
 
 
-publishing {
-    publications {
-        release(MavenPublication) {
-            groupId PUBLISH_GROUP_ID
-            artifactId PUBLISH_ARTIFACT_ID
-            version PUBLISH_VERSION
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId PUBLISH_GROUP_ID
+                artifactId PUBLISH_ARTIFACT_ID
+                version PUBLISH_VERSION
+                from components.release
+                // if (project.plugins.findPlugin("com.android.library")) {
+                //     artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+                // } else {
+                //     artifact("$buildDir/libs/${project.getName()}-${version}.jar")
+                // }
+                // artifact androidSourcesJar
 
-            if (project.plugins.findPlugin("com.android.library")) {
-                artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
-            } else {
-                artifact("$buildDir/libs/${project.getName()}-${version}.jar")
-            }
-            artifact androidSourcesJar
+                pom {
+                    name = PUBLISH_ARTIFACT_ID
+                    description = 'ZebraPrintLibrary'
+                    url = 'https://github.com/dadino/ZebraPrintLibrary'
 
-            pom {
-                name = PUBLISH_ARTIFACT_ID
-                description = 'ZebraPrintLibrary'
-                url = 'https://github.com/dadino/ZebraPrintLibrary'
-
-                developers {
-                    developer {
-                        id = 'dadino'
-                        name = 'David Corsalini'
-                        email = 'corsalini.david@gmail.com'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:github.com/dadino/ZebraPrintLibrary.git'
-                    developerConnection = 'scm:git:ssh://github.com/dadino/ZebraPrintLibrary.git'
-                    url = 'https://github.com/dadino/ZebraPrintLibrary/tree/master'
-                }
-                licenses {
-                    license {
-                        name = 'The Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                withXml {
-                    def dependenciesNode = asNode().appendNode('dependencies')
-
-                    project.configurations.implementation.allDependencies.each {
-                        if (it.name != "unspecified") {
-                            def dependencyNode = dependenciesNode.appendNode('dependency')
-                            dependencyNode.appendNode('groupId', it.group)
-                            dependencyNode.appendNode('artifactId', it.name)
-                            dependencyNode.appendNode('version', it.version)
+                    developers {
+                        developer {
+                            id = 'dadino'
+                            name = 'David Corsalini'
+                            email = 'corsalini.david@gmail.com'
                         }
                     }
-                    project.configurations.api.allDependencies.each {
-                        if (it.name != "unspecified") {
-                            def dependencyNode = dependenciesNode.appendNode('dependency')
-                            dependencyNode.appendNode('groupId', it.group)
-                            dependencyNode.appendNode('artifactId', it.name)
-                            dependencyNode.appendNode('version', it.version)
+                    scm {
+                        connection = 'scm:git:github.com/dadino/ZebraPrintLibrary.git'
+                        developerConnection = 'scm:git:ssh://github.com/dadino/ZebraPrintLibrary.git'
+                        url = 'https://github.com/dadino/ZebraPrintLibrary/tree/master'
+                    }
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                         }
                     }
+
+                    //withXml {
+                    //    def dependenciesNode = asNode().appendNode('dependencies')
+//
+                    //    project.configurations.implementation.allDependencies.each {
+                    //        def dependencyNode = dependenciesNode.appendNode('dependency')
+                    //        dependencyNode.appendNode('groupId', it.group)
+                    //        dependencyNode.appendNode('artifactId', it.name)
+                    //        dependencyNode.appendNode('version', it.version)
+                    //    }
+                    //}
                 }
             }
         }
-    }
 
-    repositories {
-        maven {
-            name = "sonatype"
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            credentials {
-                username rootProject.ext.ossrhUsername
-                password rootProject.ext.ossrhPassword
+        repositories {
+            maven {
+                name = "sonatype"
+                url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                credentials {
+                    username rootProject.ext.ossrhUsername
+                    password rootProject.ext.ossrhPassword
+                }
             }
+        }
+
+        signing {
+            sign publishing.publications.release
         }
     }
 }
@@ -106,6 +102,29 @@ task printProps {
     }
 }
 
-signing {
-    sign publishing.publications.release
+def addDependencyToPom(Node dependenciesNode, String type, String group, String name, String version) {
+    println("$type dependency -> group: ${group}, name: ${name}, version: ${version}")
+    if (group != "unspecified" && name != "unspecified") {
+        if (version == null || version == "unspecified") {
+            if (group == rootProject.groupId || group == rootProject.name) {
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                dependencyNode.appendNode('groupId', rootProject.groupId)
+                dependencyNode.appendNode('artifactId', name)
+                dependencyNode.appendNode('version', rootProject.versionName)
+
+                println("Added to POM")
+            } else {
+                println("Skipped")
+            }
+        } else {
+            def dependencyNode = dependenciesNode.appendNode('dependency')
+            dependencyNode.appendNode('groupId', group)
+            dependencyNode.appendNode('artifactId', name)
+            dependencyNode.appendNode('version', version)
+
+            println("Added to POM")
+        }
+    } else {
+        println("Skipped")
+    }
 }

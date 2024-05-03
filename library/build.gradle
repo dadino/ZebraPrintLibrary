@@ -13,28 +13,18 @@ ext {
 apply from: "${rootProject.projectDir}/scripts/publish-mavencentral.gradle"
 
 android {
-    compileSdkVersion rootProject.compileSdk
+    compileSdk rootProject.compileSdk
 
     defaultConfig {
-        minSdkVersion rootProject.minSdk
-        targetSdkVersion rootProject.targetSdk
+        minSdk rootProject.minSdk
+        targetSdk rootProject.targetSdk
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
-
-    signingConfigs {
-        releaseConfig {
-            storeFile file("../app/zebra_print_library_sample_key.jks")
-            storePassword("zebraprint")
-            keyAlias "Dadino"
-            keyPassword "zebraprint"
-        }
-    }
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.releaseConfig
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             matchingFallbacks = ['release']
         }
@@ -55,6 +45,12 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            //withJavadocJar()
+        }
     }
     packagingOptions {
         jniLibs {
@@ -84,6 +80,7 @@ android {
         }
     }
     namespace 'com.dadino.zebraprint.library'
+
 }
 
 dependencies {
