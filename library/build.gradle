@@ -2,7 +2,7 @@ plugins {
     id 'com.android.library'
     id 'kotlin-android'
     id 'kotlinx-serialization'
-    id "com.google.protobuf" version "0.8.18"
+    id "com.google.protobuf" version '0.9.0'
 }
 
 ext {
@@ -25,7 +25,7 @@ android {
 
     signingConfigs {
         releaseConfig {
-            storeFile file("zebra_print_library_sample_key.jks")
+            storeFile file("../app/zebra_print_library_sample_key.jks")
             storePassword("zebraprint")
             keyAlias "Dadino"
             keyPassword "zebraprint"
@@ -45,9 +45,16 @@ android {
         }
     }
 
+
+    kotlin {
+        jvmToolchain(17)
+    }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
     packagingOptions {
         jniLibs {
@@ -91,14 +98,14 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
 
     //AndroidX
-    implementation("androidx.core:core-ktx:1.7.0")
-    implementation("androidx.appcompat:appcompat:1.4.1")
-    implementation("androidx.preference:preference-ktx:1.2.0")
-    implementation("com.google.android.material:material:1.6.1")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("com.google.android.material:material:1.11.0")
 
     //Data Store
-    api("com.google.protobuf:protobuf-javalite:3.19.4")
-    api("androidx.datastore:datastore:1.0.0")
+    api("com.google.protobuf:protobuf-javalite:3.21.11")
+    api("androidx.datastore:datastore:1.1.1")
 
     //Timber
     implementation('com.jakewharton.timber:timber:4.7.1')
@@ -108,5 +115,5 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version")
 
     //Quickstart
-    api("io.github.dadino.quickstart3:contextformattable:0.12.7")
+    api("io.github.dadino.quickstart3:contextformattable:0.13.4")
 }
