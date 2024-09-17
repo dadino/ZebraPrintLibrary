@@ -15,7 +15,8 @@ object StatusReader {
         return withContext(Dispatchers.IO) {
             val result = try {
                 Timber.d("Status reading started")
-                if (printerConnection.isConnected.not()) printerConnection.open()
+                if (printerConnection.isConnected.not())
+                    printerConnection.open()
 
                 val printer: ZebraPrinter = ZebraPrinterFactory.getInstance(printerConnection)
 

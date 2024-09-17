@@ -7,7 +7,7 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.4.0'
+        classpath 'com.android.tools.build:gradle:8.5.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
@@ -22,8 +22,8 @@ ext {
     minSdk = 21
     targetSdk = 34
 
-    versionCode = 19
-    versionName = "0.7.0"
+    versionCode = 20
+    versionName = "0.7.1"
 
     groupId = "io.github.dadino.zebraprintlibrary"
     artifactIdLibrary = "library"

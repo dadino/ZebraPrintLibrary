@@ -1,5 +1,6 @@
 package com.dadino.zebraprint.library.rx2
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import com.dadino.quickstart3.base.Optional
 import com.dadino.zebraprint.library.PrintResponse
@@ -15,88 +16,113 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 
-class RxZebraPrint(private val coroutineContext: CoroutineContext = EmptyCoroutineContext, useStrictFilteringForGenericDevices: Boolean) {
+class RxZebraPrint(
+    private val coroutineContext: CoroutineContext = EmptyCoroutineContext,
+    useStrictFilteringForGenericDevices: Boolean
+) {
 
-	private val zebraPrint: ZebraPrint = ZebraPrint(useStrictFilteringForGenericDevices)
+    private val zebraPrint: ZebraPrint = ZebraPrint(useStrictFilteringForGenericDevices)
 
-	fun getUseStrictFilteringForGenericDevices(): Boolean {
-		return zebraPrint.useStrictFilteringForGenericDevices
-	}
+    fun getUseStrictFilteringForGenericDevices(): Boolean {
+        return zebraPrint.useStrictFilteringForGenericDevices
+    }
 
-	fun setUseStrictFilteringForGenericDevices(useStrictFilteringForGenericDevices: Boolean) {
-		zebraPrint.useStrictFilteringForGenericDevices = useStrictFilteringForGenericDevices
-	}
+    fun setUseStrictFilteringForGenericDevices(useStrictFilteringForGenericDevices: Boolean) {
+        zebraPrint.useStrictFilteringForGenericDevices = useStrictFilteringForGenericDevices
+    }
 
-	fun getSearchOnBluetooth(): Boolean {
-		return zebraPrint.searchOnBluetooth
-	}
+    fun getSearchOnBluetooth(): Boolean {
+        return zebraPrint.searchOnBluetooth
+    }
 
-	fun setSearchOnBluetooth(searchOnBluetooth: Boolean) {
-		zebraPrint.searchOnBluetooth = searchOnBluetooth
-	}
+    fun setSearchOnBluetooth(searchOnBluetooth: Boolean) {
+        zebraPrint.searchOnBluetooth = searchOnBluetooth
+    }
 
-	fun getSearchOnBle(): Boolean {
-		return zebraPrint.searchOnBle
-	}
+    fun getSearchOnBle(): Boolean {
+        return zebraPrint.searchOnBle
+    }
 
-	fun setSearchOnBle(searchOnBle: Boolean) {
-		zebraPrint.searchOnBle = searchOnBle
-	}
+    fun setSearchOnBle(searchOnBle: Boolean) {
+        zebraPrint.searchOnBle = searchOnBle
+    }
 
-	fun getSearchOnNetwork(): Boolean {
-		return zebraPrint.searchOnNetwork
-	}
+    fun getSearchOnNetwork(): Boolean {
+        return zebraPrint.searchOnNetwork
+    }
 
-	fun setSearchOnNetwork(searchOnNetwork: Boolean) {
-		zebraPrint.searchOnNetwork = searchOnNetwork
-	}
+    fun setSearchOnNetwork(searchOnNetwork: Boolean) {
+        zebraPrint.searchOnNetwork = searchOnNetwork
+    }
 
-	fun setActivity(activity: AppCompatActivity) {
-		zebraPrint.setActivity(activity)
-	}
+    fun setActivity(activity: AppCompatActivity) {
+        zebraPrint.setActivity(activity)
+    }
 
-	fun printZplWithSelectedPrinter(zpl: String, failOnErrors: Boolean = false): Single<PrintResponse> {
-		return rxSingle(coroutineContext) {
-			zebraPrint.printZplWithSelectedPrinter(zpl = zpl, failOnErrors = failOnErrors).getOrThrow()
-		}
-	}
+    fun printZplWithSelectedPrinter(
+        zpl: String,
+        failOnErrors: Boolean = false
+    ): Single<PrintResponse> {
+        return rxSingle(coroutineContext) {
+            zebraPrint.printZplWithSelectedPrinter(zpl = zpl, failOnErrors = failOnErrors)
+                .getOrThrow()
+        }
+    }
 
-	fun printTemplateWithSelectedPrinter(templateName: String, data: Map<Int, String>, failOnErrors: Boolean = false): Single<PrintResponse> {
-		return rxSingle(coroutineContext) {
-			zebraPrint.printTemplateWithSelectedPrinter(templateName = templateName, data = data, failOnErrors = failOnErrors).getOrThrow()
-		}
-	}
+    fun printTemplateWithSelectedPrinter(
+        templateName: String,
+        data: Map<Int, String>,
+        failOnErrors: Boolean = false
+    ): Single<PrintResponse> {
+        return rxSingle(coroutineContext) {
+            zebraPrint.printTemplateWithSelectedPrinter(
+                templateName = templateName,
+                data = data,
+                failOnErrors = failOnErrors
+            ).getOrThrow()
+        }
+    }
 
-	fun printByteArrayWithSelectedPrinter(byteArray: ByteArray, failOnErrors: Boolean = false): Single<PrintResponse> {
-		return rxSingle(coroutineContext) {
-			zebraPrint.printByteArrayWithSelectedPrinter(byteArray = byteArray, failOnErrors = failOnErrors).getOrThrow()
-		}
-	}
+    fun printByteArrayWithSelectedPrinter(
+        byteArray: ByteArray,
+        failOnErrors: Boolean = false
+    ): Single<PrintResponse> {
+        return rxSingle(coroutineContext) {
+            zebraPrint.printByteArrayWithSelectedPrinter(
+                byteArray = byteArray,
+                failOnErrors = failOnErrors
+            ).getOrThrow()
+        }
+    }
 
-	fun searchPrinterAndSave(): Completable {
-		return rxCompletable(coroutineContext) {
-			zebraPrint.searchPrinterAndSave()
-		}
-	}
+    fun searchPrinterAndSave(): Completable {
+        return rxCompletable(coroutineContext) {
+            zebraPrint.searchPrinterAndSave()
+        }
+    }
 
-	fun loadSelectedPrinter(): Single<Optional<Printer>> {
-		return rxSingle(coroutineContext) {
-			Optional.create(zebraPrint.loadSelectedPrinter())
-		}
-	}
+    fun loadSelectedPrinter(): Single<Optional<Printer>> {
+        return rxSingle(coroutineContext) {
+            Optional.create(zebraPrint.loadSelectedPrinter())
+        }
+    }
 
-	fun getSelectedPrinter(): Flowable<Optional<Printer>> {
-		return rxFlowable(coroutineContext) {
-			zebraPrint.getSelectedPrinter()
-				.collect { printer ->
-					this.send(Optional.create(printer))
-				}
-		}
-	}
+    fun getSelectedPrinter(): Flowable<Optional<Printer>> {
+        return rxFlowable(coroutineContext) {
+            zebraPrint.getSelectedPrinter()
+                .collect { printer ->
+                    this.send(Optional.create(printer))
+                }
+        }
+    }
 
-	fun closeConnections(): Completable {
-		return rxCompletable(coroutineContext) {
-			zebraPrint.closeConnections()
-		}
-	}
+    fun closeConnections(): Completable {
+        return rxCompletable(coroutineContext) {
+            zebraPrint.closeConnections()
+        }
+    }
+
+    fun getMissingPermissions(context: Context): List<String> {
+        return zebraPrint.getMissingPermissions(context)
+    }
 }
