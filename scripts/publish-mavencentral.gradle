@@ -80,8 +80,8 @@ afterEvaluate {
                 name = "sonatype"
                 url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                 credentials {
-                    username rootProject.ext.ossrhUsername
-                    password rootProject.ext.ossrhPassword
+                    username rootProject.ext.ossrhToken
+                    password rootProject.ext.ossrhTokenPassword
                 }
             }
         }
@@ -97,8 +97,8 @@ task printProps {
         println "Key Id ${System.properties['signing.keyId']}"
         println "Key Password ${System.properties['signing.password']}"
         println "Key File ${System.properties['signing.secretKeyRingFile']}"
-        println "ext OSSRH Username ${rootProject.ext.ossrhUsername}"
-        println "ext OSSRH Password ${rootProject.ext.ossrhPassword}"
+        println "ext OSSRH Token ${rootProject.ext.ossrhToken}"
+        println "ext OSSRH Token Password ${rootProject.ext.ossrhTokenPassword}"
     }
 }
 
